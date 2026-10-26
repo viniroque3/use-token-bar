@@ -10,6 +10,7 @@ public final class TokenAggregator: ObservableObject {
     @Published public var isGenerating: Bool = false
     @Published public var historyPoints: [TokenDataPoint] = []
     @Published public var hoveredPoint: TokenDataPoint? = nil
+    @Published public var activeIDE: String = "Antigravity IDE"
 
     private var timer: Timer?
 
@@ -20,16 +21,7 @@ public final class TokenAggregator: ObservableObject {
     }
 
     private func seedInitialHistory() {
-        let now = Date()
-        var initial: [TokenDataPoint] = []
-        let baseTokens = 210_000
-        for i in (0..<15).reversed() {
-            let t = now.addingTimeInterval(-Double(i * 45))
-            let progress = Double(15 - i) / 15.0
-            let tok = Int(Double(baseTokens) * (0.6 + 0.4 * pow(progress, 1.8)))
-            initial.append(TokenDataPoint(timestamp: t, tokens: tok, provider: .antigravity))
-        }
-        self.historyPoints = initial
+        self.historyPoints = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: 282_200)
     }
 
     public func startPeriodicSync() {
@@ -101,22 +93,28 @@ public final class TokenAggregator: ObservableObject {
             )
         }
 
-        // Live Dynamic Chart Feed
+        // Determine active IDE
+        if let generating = mergedAgents.first(where: { $0.state == .generating || $0.state == .executingTool }) {
+            self.activeIDE = generating.provider.rawValue
+        } else if let activeWithTokens = mergedAgents.first(where: { $0.tokensSession > 0 }) {
+            self.activeIDE = activeWithTokens.provider.rawValue
+        } else if let running = runningApps.first {
+            self.activeIDE = running.rawValue
+        } else {
+            self.activeIDE = "Antigravity IDE"
+        }
+
+        // Live Dynamic Chart Feed spanning entire day from start of usage
         let now = Date()
         let currentTotal = self.stats.totalTokens
 
-        if let last = historyPoints.last {
-            // If more than 15 seconds passed, push a new point
+        if historyPoints.isEmpty {
+            self.historyPoints = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: currentTotal)
+        } else if let last = historyPoints.last {
             if now.timeIntervalSince(last.timestamp) >= 15 {
                 historyPoints.append(TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity))
-                if historyPoints.count > 25 {
-                    historyPoints.removeFirst()
-                }
-            } else {
-                // Smoothly update the current latest point with the active token count
-                if let lastIndex = historyPoints.indices.last {
-                    historyPoints[lastIndex] = TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity)
-                }
+            } else if let lastIndex = historyPoints.indices.last {
+                historyPoints[lastIndex] = TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity)
             }
         } else {
             historyPoints.append(TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity))

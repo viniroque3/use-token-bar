@@ -16,11 +16,18 @@ public struct StatsChartView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Header with interactive hover feedback
+            // Header with interactive hover feedback showing daily timeline & IDE
             HStack(alignment: .firstTextBaseline) {
-                Text("Token Throughput")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(textPrimary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Daily Usage Timeline")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(textPrimary)
+                    if let first = history.first, let last = history.last {
+                        Text("\(first.timestamp.formatted(date: .omitted, time: .shortened)) - \(last.timestamp.formatted(date: .omitted, time: .shortened)) • \(aggregator.activeIDE)")
+                            .font(.system(size: 10))
+                            .foregroundColor(textSecondary)
+                    }
+                }
 
                 Spacer()
 
@@ -30,7 +37,7 @@ public struct StatsChartView: View {
                             .font(.system(size: 12, weight: .light, design: .rounded))
                             .foregroundColor(appleBlue)
                         Text("tokens at \(hovered.timestamp.formatted(date: .omitted, time: .standard))")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: 10, weight: .medium))
                             .foregroundColor(textSecondary)
                     }
                     .transition(.opacity)
@@ -39,7 +46,7 @@ public struct StatsChartView: View {
                         Circle()
                             .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
                             .frame(width: 5, height: 5)
-                        Text(aggregator.isGenerating ? "Streaming live" : "Recent activity")
+                        Text(aggregator.isGenerating ? "Streaming live" : "Daily tracking")
                             .font(.system(size: 11))
                             .foregroundColor(textSecondary)
                     }
@@ -54,7 +61,7 @@ public struct StatsChartView: View {
                         x: .value("Time", point.timestamp),
                         y: .value("Tokens", point.tokens)
                     )
-                    .interpolationMethod(.catmullRom)
+                    .interpolationMethod(.monotone)
                     .lineStyle(StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round))
                     .foregroundStyle(appleBlue)
 
@@ -62,7 +69,7 @@ public struct StatsChartView: View {
                         x: .value("Time", point.timestamp),
                         y: .value("Tokens", point.tokens)
                     )
-                    .interpolationMethod(.catmullRom)
+                    .interpolationMethod(.monotone)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [appleBlue.opacity(0.12), appleBlue.opacity(0.005)],
@@ -98,7 +105,7 @@ public struct StatsChartView: View {
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
-                    AxisValueLabel(format: .dateTime.hour().minute().second())
+                    AxisValueLabel(format: .dateTime.hour().minute())
                         .font(.system(size: 9, weight: .regular))
                         .foregroundStyle(textSecondary)
                 }

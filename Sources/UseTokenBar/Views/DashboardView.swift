@@ -92,25 +92,36 @@ public struct DashboardView: View {
 
     @ViewBuilder
     private var mainDashboardView: some View {
-        // Active Model Section
+        // Active IDE & Model Section
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("ACTIVE MODEL")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("ACTIVE IDE & MODEL")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(textSecondary)
                         .tracking(0.5)
 
-                    HStack(spacing: 10) {
-                        ForEach(activeModelsInUse, id: \.self) { model in
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(appleBlue)
-                                    .frame(width: 6, height: 6)
-                                Text(model)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(textPrimary)
-                            }
+                    HStack(spacing: 8) {
+                        HStack(spacing: 5) {
+                            Circle()
+                                .fill(Color(red: 0.48, green: 0.23, blue: 0.93))
+                                .frame(width: 6, height: 6)
+                            Text(aggregator.activeIDE)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(textPrimary)
+                        }
+
+                        Text("•")
+                            .font(.system(size: 12))
+                            .foregroundColor(textSecondary)
+
+                        HStack(spacing: 5) {
+                            Circle()
+                                .fill(appleBlue)
+                                .frame(width: 6, height: 6)
+                            Text(preferences.selectedModel)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(textPrimary)
                         }
                     }
                 }
@@ -127,35 +138,6 @@ public struct DashboardView: View {
                 }
             }
         }
-
-        // Desktop Widget Selector Bar
-        HStack {
-            Text("DESKTOP WIDGET")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(textSecondary)
-                .tracking(0.5)
-
-            Spacer()
-
-            HStack(spacing: 6) {
-                ForEach(DesktopWidgetSize.allCases) { size in
-                    let isSelected = preferences.desktopWidgetSize == size.rawValue
-                    Button(action: {
-                        preferences.updateDesktopWidgetSize(size)
-                    }) {
-                        Text(size.rawValue)
-                            .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 4)
-                            .background(isSelected ? appleBlue.opacity(0.12) : Color.black.opacity(0.03))
-                            .foregroundColor(isSelected ? appleBlue : textSecondary)
-                            .cornerRadius(6)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .padding(.vertical, 2)
 
         // Export Feedback message
         if let msg = preferences.exportStatusMessage {

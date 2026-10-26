@@ -60,8 +60,8 @@ public struct DesktopWidgetView: View {
                     .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
                     .frame(width: 6, height: 6)
 
-                Text(preferences.selectedModel)
-                    .font(.system(size: 11, weight: .bold))
+                Text("\(aggregator.activeIDE) • \(preferences.selectedModel)")
+                    .font(.system(size: 10, weight: .bold))
                     .foregroundColor(textPrimary)
                     .lineLimit(1)
 
@@ -111,8 +111,15 @@ public struct DesktopWidgetView: View {
                         .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
                         .frame(width: 6, height: 6)
 
+                    Text(aggregator.activeIDE)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(textPrimary)
+
+                    Text("•")
+                        .foregroundColor(textSecondary)
+
                     Text(preferences.selectedModel)
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(textPrimary)
                 }
 
