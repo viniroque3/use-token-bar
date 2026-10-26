@@ -301,10 +301,26 @@ public struct DashboardView: View {
         Divider()
 
         // Footer
-        HStack {
+        HStack(spacing: 8) {
             Button("Export CSV") {
-                if let url = ExportReportService.shared.exportCSV(stats: aggregator.stats, agents: aggregator.activeAgents, model: preferences.selectedModel) {
+                if let url = ExportReportService.shared.exportDailyHistoryCSV(records: aggregator.dailyRecords) ?? ExportReportService.shared.exportCSV(stats: aggregator.stats, agents: aggregator.activeAgents, model: preferences.selectedModel) {
                     preferences.exportStatusMessage = "CSV exported: \(url.lastPathComponent)"
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                        preferences.exportStatusMessage = nil
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(appleBlue)
+
+            Text("•")
+                .font(.system(size: 9))
+                .foregroundColor(textSecondary)
+
+            Button("Export Excel") {
+                if let url = ExportReportService.shared.exportDailyHistoryExcel(records: aggregator.dailyRecords) {
+                    preferences.exportStatusMessage = "Excel exported: \(url.lastPathComponent)"
                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                         preferences.exportStatusMessage = nil
                     }
@@ -316,7 +332,7 @@ public struct DashboardView: View {
 
             Spacer()
 
-            Text("Antigravity • VS Code • Cursor • Codex")
+            Text("Antigravity • VS Code • Codex")
                 .font(.system(size: 10))
                 .foregroundColor(textSecondary)
 
@@ -457,10 +473,44 @@ public struct DashboardView: View {
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(textSecondary)
                         .tracking(0.5)
+
                     Spacer()
-                    Text("\(aggregator.dailyRecords.prefix(30).count) recorded today")
-                        .font(.system(size: 10))
-                        .foregroundColor(textSecondary)
+
+                    HStack(spacing: 6) {
+                        Button("Save CSV") {
+                            if let url = ExportReportService.shared.exportDailyHistoryCSV(records: aggregator.dailyRecords) {
+                                preferences.exportStatusMessage = "CSV saved: \(url.lastPathComponent)"
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                                    preferences.exportStatusMessage = nil
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(appleBlue)
+
+                        Text("•")
+                            .font(.system(size: 9))
+                            .foregroundColor(textSecondary)
+
+                        Button("Save Excel") {
+                            if let url = ExportReportService.shared.exportDailyHistoryExcel(records: aggregator.dailyRecords) {
+                                preferences.exportStatusMessage = "Excel saved: \(url.lastPathComponent)"
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                                    preferences.exportStatusMessage = nil
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(appleBlue)
+                    }
+                }
+
+                if let msg = preferences.exportStatusMessage {
+                    Text(msg)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(appleBlue)
                 }
 
                 if aggregator.dailyRecords.isEmpty {
