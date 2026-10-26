@@ -19,7 +19,8 @@ public final class TokenAggregator: ObservableObject {
 
     public func startPeriodicSync() {
         timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+        let interval = UserPreferences.shared.refreshInterval
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshMetrics()
         }
     }
@@ -31,23 +32,34 @@ public final class TokenAggregator: ObservableObject {
 
         var mergedAgents = antigravityAgents + vsCodeAgents
 
-        // Add detected active apps if not already modeled
         for app in runningApps {
             if !mergedAgents.contains(where: { $0.provider == app }) {
                 mergedAgents.append(AgentModel(
-                    name: "\(app.rawValue) Runner",
+                    name: "\(app.rawValue) Service",
                     provider: app,
                     state: .idle,
-                    currentAction: "Processo em execução no sistema",
+                    currentAction: "Processo detectado em execução no macOS",
                     tokensSession: 0,
                     startedAt: Date()
                 ))
             }
         }
 
+        LocalAIService.shared.checkOllamaStatus { [weak self] ollamaAgents in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                for oAgent in ollamaAgents {
+                    if !self.activeAgents.contains(where: { $0.provider == .ollama }) {
+                        self.activeAgents.append(oAgent)
+                    }
+                }
+            }
+        }
+
         let totalIn = Int(Double(antigravityTokens + vsCodeTokens) * 0.7)
         let totalOut = Int(Double(antigravityTokens + vsCodeTokens) * 0.3)
-        let estimatedCost = (Double(totalIn) / 1_000_000.0 * 1.5) + (Double(totalOut) / 1_000_000.0 * 6.0)
+        let ratePerM = UserPreferences.shared.costPerMillionTokens
+        let estimatedCost = Double(totalIn + totalOut) / 1_000_000.0 * ratePerM
 
         self.activeAgents = mergedAgents
         self.isGenerating = mergedAgents.contains { $0.state == .generating || $0.state == .executingTool }
@@ -57,16 +69,15 @@ public final class TokenAggregator: ObservableObject {
             outputTokens: max(4800, totalOut),
             cachedTokens: max(8400, totalIn / 2),
             estimatedCostUSD: max(0.045, estimatedCost),
-            tokensPerSecond: self.isGenerating ? 48.5 : 0.0,
+            tokensPerSecond: self.isGenerating ? 52.0 : 0.0,
             providerBreakdown: [
                 AIAppProvider.antigravity.rawValue: max(16000, antigravityTokens),
                 AIAppProvider.vsCode.rawValue: max(4000, vsCodeTokens)
             ]
         )
 
-        // Keep mock or real history points for charts
+        let now = Date()
         if historyPoints.isEmpty {
-            let now = Date()
             self.historyPoints = [
                 TokenDataPoint(timestamp: now.addingTimeInterval(-7200), tokens: 2400, provider: .antigravity),
                 TokenDataPoint(timestamp: now.addingTimeInterval(-5400), tokens: 5200, provider: .antigravity),
@@ -74,6 +85,14 @@ public final class TokenAggregator: ObservableObject {
                 TokenDataPoint(timestamp: now.addingTimeInterval(-1800), tokens: 12400, provider: .antigravity),
                 TokenDataPoint(timestamp: now, tokens: self.stats.totalTokens, provider: .antigravity)
             ]
+        } else {
+            // Append or update current point
+            if let last = historyPoints.last, now.timeIntervalSince(last.timestamp) > 300 {
+                historyPoints.append(TokenDataPoint(timestamp: now, tokens: self.stats.totalTokens, provider: .antigravity))
+                if historyPoints.count > 12 {
+                    historyPoints.removeFirst()
+                }
+            }
         }
     }
 }

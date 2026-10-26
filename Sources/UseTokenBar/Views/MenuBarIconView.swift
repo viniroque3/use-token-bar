@@ -2,9 +2,11 @@ import SwiftUI
 
 public struct MenuBarIconView: View {
     @ObservedObject var aggregator: TokenAggregator
+    @ObservedObject var preferences: UserPreferences
 
-    public init(aggregator: TokenAggregator = .shared) {
+    public init(aggregator: TokenAggregator = .shared, preferences: UserPreferences = .shared) {
         self.aggregator = aggregator
+        self.preferences = preferences
     }
 
     public var body: some View {
@@ -18,8 +20,13 @@ public struct MenuBarIconView: View {
                     .foregroundColor(aggregator.isGenerating ? .green : .primary)
             }
 
-            Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            if preferences.displayMode == MenuBarDisplayMode.iconAndTokens.rawValue {
+                Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            } else if preferences.displayMode == MenuBarDisplayMode.iconAndAgents.rawValue {
+                Text("\(aggregator.activeAgents.count) ag")
+                    .font(.system(size: 11, weight: .semibold))
+            }
 
             if !aggregator.activeAgents.isEmpty {
                 Circle()
