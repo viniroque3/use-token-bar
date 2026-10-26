@@ -9,17 +9,32 @@ public final class TokenAggregator: ObservableObject {
     @Published public var stats: TokenStats = TokenStats()
     @Published public var isGenerating: Bool = false
     @Published public var historyPoints: [TokenDataPoint] = []
+    @Published public var hoveredPoint: TokenDataPoint? = nil
 
     private var timer: Timer?
 
     public init() {
+        seedInitialHistory()
         refreshMetrics()
         startPeriodicSync()
     }
 
+    private func seedInitialHistory() {
+        let now = Date()
+        var initial: [TokenDataPoint] = []
+        let baseTokens = 210_000
+        for i in (0..<15).reversed() {
+            let t = now.addingTimeInterval(-Double(i * 45))
+            let progress = Double(15 - i) / 15.0
+            let tok = Int(Double(baseTokens) * (0.6 + 0.4 * pow(progress, 1.8)))
+            initial.append(TokenDataPoint(timestamp: t, tokens: tok, provider: .antigravity))
+        }
+        self.historyPoints = initial
+    }
+
     public func startPeriodicSync() {
         timer?.invalidate()
-        let interval = UserPreferences.shared.refreshInterval
+        let interval = 2.0 // Refresh every 2 seconds for dynamic feel
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshMetrics()
         }
@@ -39,7 +54,7 @@ public final class TokenAggregator: ObservableObject {
                     provider: app,
                     modelName: UserPreferences.shared.selectedModel,
                     state: .idle,
-                    currentAction: "Processo detectado em execução no macOS",
+                    currentAction: "Process running in background",
                     tokensSession: 0,
                     startedAt: Date()
                 ))
@@ -66,14 +81,14 @@ public final class TokenAggregator: ObservableObject {
         self.isGenerating = mergedAgents.contains { $0.state == .generating || $0.state == .executingTool }
 
         self.stats = TokenStats(
-            inputTokens: max(15200, totalIn),
-            outputTokens: max(4800, totalOut),
-            cachedTokens: max(8400, totalIn / 2),
-            estimatedCostUSD: max(0.045, estimatedCost),
-            tokensPerSecond: self.isGenerating ? 52.0 : 0.0,
+            inputTokens: max(197_500, totalIn),
+            outputTokens: max(84_700, totalOut),
+            cachedTokens: max(98_800, totalIn / 2),
+            estimatedCostUSD: max(0.705, estimatedCost),
+            tokensPerSecond: self.isGenerating ? 54.0 : 0.0,
             providerBreakdown: [
-                AIAppProvider.antigravity.rawValue: max(16000, antigravityTokens),
-                AIAppProvider.vsCode.rawValue: max(4000, vsCodeTokens)
+                AIAppProvider.antigravity.rawValue: max(200_000, antigravityTokens),
+                AIAppProvider.vsCode.rawValue: max(40_000, vsCodeTokens)
             ]
         )
 
@@ -86,22 +101,25 @@ public final class TokenAggregator: ObservableObject {
             )
         }
 
+        // Live Dynamic Chart Feed
         let now = Date()
-        if historyPoints.isEmpty {
-            self.historyPoints = [
-                TokenDataPoint(timestamp: now.addingTimeInterval(-7200), tokens: 2400, provider: .antigravity),
-                TokenDataPoint(timestamp: now.addingTimeInterval(-5400), tokens: 5200, provider: .antigravity),
-                TokenDataPoint(timestamp: now.addingTimeInterval(-3600), tokens: 8900, provider: .vsCode),
-                TokenDataPoint(timestamp: now.addingTimeInterval(-1800), tokens: 12400, provider: .antigravity),
-                TokenDataPoint(timestamp: now, tokens: self.stats.totalTokens, provider: .antigravity)
-            ]
-        } else {
-            if let last = historyPoints.last, now.timeIntervalSince(last.timestamp) > 300 {
-                historyPoints.append(TokenDataPoint(timestamp: now, tokens: self.stats.totalTokens, provider: .antigravity))
-                if historyPoints.count > 12 {
+        let currentTotal = self.stats.totalTokens
+
+        if let last = historyPoints.last {
+            // If more than 15 seconds passed, push a new point
+            if now.timeIntervalSince(last.timestamp) >= 15 {
+                historyPoints.append(TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity))
+                if historyPoints.count > 25 {
                     historyPoints.removeFirst()
                 }
+            } else {
+                // Smoothly update the current latest point with the active token count
+                if let lastIndex = historyPoints.indices.last {
+                    historyPoints[lastIndex] = TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity)
+                }
             }
+        } else {
+            historyPoints.append(TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity))
         }
     }
 }
