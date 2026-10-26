@@ -12,6 +12,14 @@ public struct DashboardView: View {
         self.aggregator = aggregator
     }
 
+    private var activeModelsInUse: [String] {
+        let models = aggregator.activeAgents
+            .filter { $0.state == .generating || $0.state == .executingTool || $0.tokensSession > 0 }
+            .map { $0.modelName }
+        let unique = Array(NSOrderedSet(array: models)).compactMap { $0 as? String }
+        return unique.isEmpty ? [preferences.selectedModel] : unique
+    }
+
     private var appIconImage: NSImage? {
         if let path = Bundle.main.path(forResource: "AppIcon", ofType: "png") {
             return NSImage(contentsOfFile: path)
@@ -21,7 +29,7 @@ public struct DashboardView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Header with Official App Icon
+            // Header with App Icon & Minimal Text Actions
             HStack(alignment: .center, spacing: 10) {
                 if let img = appIconImage {
                     Image(nsImage: img)
@@ -29,7 +37,7 @@ public struct DashboardView: View {
                         .scaledToFit()
                         .frame(width: 32, height: 32)
                         .cornerRadius(7)
-                        .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
+                        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -89,18 +97,27 @@ public struct DashboardView: View {
 
     @ViewBuilder
     private var mainDashboardView: some View {
-        // Active Model Section (Flat typographic row with clean status)
-        VStack(alignment: .leading, spacing: 10) {
+        // Active Model Section: Shows ONLY models actually in use right now
+        VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text("ACTIVE MODEL")
                         .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(textSecondary)
                         .tracking(0.5)
 
-                    Text(preferences.selectedModel)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(textPrimary)
+                    HStack(spacing: 10) {
+                        ForEach(activeModelsInUse, id: \.self) { model in
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(appleBlue)
+                                    .frame(width: 6, height: 6)
+                                Text(model)
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(textPrimary)
+                            }
+                        }
+                    }
                 }
 
                 Spacer()
@@ -113,27 +130,6 @@ public struct DashboardView: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(aggregator.isGenerating ? Color(red: 0.15, green: 0.65, blue: 0.30) : textSecondary)
                 }
-            }
-
-            // Minimal Model Quick Switcher Tabs
-            HStack(spacing: 8) {
-                ForEach(["Gemini 3.8 Flash", "Argon Reasoning", "Claude Opus 5.5"], id: \.self) { model in
-                    let isSelected = preferences.selectedModel == model
-                    Button(action: {
-                        preferences.selectedModel = model
-                        aggregator.refreshMetrics()
-                    }) {
-                        Text(model.replacingOccurrences(of: "Gemini ", with: "").replacingOccurrences(of: "Claude ", with: "").replacingOccurrences(of: " Reasoning", with: ""))
-                            .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(isSelected ? appleBlue.opacity(0.10) : Color.black.opacity(0.03))
-                            .foregroundColor(isSelected ? appleBlue : textSecondary)
-                            .cornerRadius(6)
-                    }
-                    .buttonStyle(.plain)
-                }
-                Spacer()
             }
         }
 
