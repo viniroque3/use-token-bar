@@ -124,6 +124,18 @@ public struct DashboardView: View {
                                 .foregroundColor(textPrimary)
                         }
                     }
+
+                    HStack(spacing: 5) {
+                        Text("TOPIC:")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(textSecondary)
+                            .tracking(0.5)
+                        Text(aggregator.conversationTopic)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(appleBlue)
+                            .lineLimit(1)
+                    }
+                    .padding(.top, 1)
                 }
 
                 Spacer()

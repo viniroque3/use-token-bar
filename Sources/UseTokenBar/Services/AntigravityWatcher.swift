@@ -80,6 +80,77 @@ public final class AntigravityWatcher {
         return (activeAgents, totalEstimatedTokens)
     }
 
+    public func fetchCurrentConversationTopic() -> String {
+        let wsURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Antigravity IDE/User/workspaceStorage")
+        if let folders = try? fileManager.contentsOfDirectory(at: wsURL, includingPropertiesForKeys: [.contentModificationDateKey], options: .skipsHiddenFiles) {
+            let sortedFolders = folders.sorted {
+                let d1 = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                let d2 = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                return d1 > d2
+            }
+
+            for folder in sortedFolders {
+                let dbFile = folder.appendingPathComponent("state.vscdb")
+                if fileManager.fileExists(atPath: dbFile.path) {
+                    var db: OpaquePointer?
+                    if sqlite3_open_v2(dbFile.path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, nil) == SQLITE_OK {
+                        let query = "SELECT value FROM ItemTable WHERE key = 'history.entries' LIMIT 1;"
+                        var stmt: OpaquePointer?
+                        if sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK {
+                            if sqlite3_step(stmt) == SQLITE_ROW, let cStr = sqlite3_column_text(stmt, 0) {
+                                let jsonStr = String(cString: cStr)
+                                sqlite3_finalize(stmt)
+                                sqlite3_close(db)
+                                if let data = jsonStr.data(using: .utf8),
+                                   let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                                    for item in arr {
+                                        if let editor = item["editor"] as? [String: Any],
+                                           let desc = editor["description"] as? String,
+                                           !desc.isEmpty {
+                                            let clean = desc.replacingOccurrences(of: "App Plan", with: "")
+                                                .replacingOccurrences(of: "Plan", with: "")
+                                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                                            if !clean.isEmpty {
+                                                return clean
+                                            }
+                                        }
+                                    }
+                                }
+                                break
+                            } else {
+                                sqlite3_finalize(stmt)
+                            }
+                        }
+                        sqlite3_close(db)
+                    }
+                }
+            }
+        }
+
+        let brainDir = antigravityDir.appendingPathComponent("brain")
+        if let convs = try? fileManager.contentsOfDirectory(at: brainDir, includingPropertiesForKeys: [.contentModificationDateKey], options: .skipsHiddenFiles) {
+            let sorted = convs.sorted {
+                let d1 = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                let d2 = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                return d1 > d2
+            }
+            if let latestConv = sorted.first {
+                if let files = try? fileManager.contentsOfDirectory(at: latestConv, includingPropertiesForKeys: nil) {
+                    for f in files where f.lastPathComponent.hasPrefix("plan_") && f.pathExtension == "md" {
+                        let name = f.deletingPathExtension().lastPathComponent
+                            .replacingOccurrences(of: "plan_", with: "")
+                            .replacingOccurrences(of: "_", with: " ")
+                            .capitalized
+                        return name
+                    }
+                }
+            }
+        }
+
+        return "Macos AI Token Monitor"
+    }
+
     public func fetchDailyHistoryPoints(totalTokens: Int) -> [TokenDataPoint] {
         let convDir = antigravityDir.appendingPathComponent("conversations")
         let brainDir = antigravityDir.appendingPathComponent("brain")

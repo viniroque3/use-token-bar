@@ -23,7 +23,7 @@ public struct StatsChartView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(textPrimary)
                     if let first = history.first, let last = history.last {
-                        Text("\(first.timestamp.formatted(date: .omitted, time: .shortened)) - \(last.timestamp.formatted(date: .omitted, time: .shortened)) • \(aggregator.activeIDE)")
+                        Text("\(first.timestamp.formatted(date: .omitted, time: .shortened)) - \(last.timestamp.formatted(date: .omitted, time: .shortened)) • \(aggregator.activeIDE) • \(aggregator.conversationTopic)")
                             .font(.system(size: 10))
                             .foregroundColor(textSecondary)
                     }

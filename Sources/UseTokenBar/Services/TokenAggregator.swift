@@ -11,6 +11,7 @@ public final class TokenAggregator: ObservableObject {
     @Published public var historyPoints: [TokenDataPoint] = []
     @Published public var hoveredPoint: TokenDataPoint? = nil
     @Published public var activeIDE: String = "Antigravity IDE"
+    @Published public var conversationTopic: String = "Macos AI Token Monitor"
 
     private var timer: Timer?
 
@@ -69,6 +70,7 @@ public final class TokenAggregator: ObservableObject {
         let ratePerM = UserPreferences.shared.costPerMillionTokens
         let estimatedCost = Double(totalIn + totalOut) / 1_000_000.0 * ratePerM
 
+        self.conversationTopic = AntigravityWatcher.shared.fetchCurrentConversationTopic()
         self.activeAgents = mergedAgents
         self.isGenerating = mergedAgents.contains { $0.state == .generating || $0.state == .executingTool }
 

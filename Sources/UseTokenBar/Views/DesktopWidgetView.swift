@@ -60,10 +60,16 @@ public struct DesktopWidgetView: View {
                     .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
                     .frame(width: 6, height: 6)
 
-                Text("\(aggregator.activeIDE) • \(preferences.selectedModel)")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(textPrimary)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(aggregator.activeIDE) • \(preferences.selectedModel)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(textPrimary)
+                        .lineLimit(1)
+                    Text(aggregator.conversationTopic)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(appleBlue)
+                        .lineLimit(1)
+                }
 
                 Spacer()
             }
@@ -121,6 +127,14 @@ public struct DesktopWidgetView: View {
                     Text(preferences.selectedModel)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(textPrimary)
+
+                    Text("•")
+                        .foregroundColor(textSecondary)
+
+                    Text(aggregator.conversationTopic)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(appleBlue)
+                        .lineLimit(1)
                 }
 
                 Spacer()
