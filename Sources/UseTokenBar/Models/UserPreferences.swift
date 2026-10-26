@@ -2,10 +2,10 @@ import Foundation
 import SwiftUI
 
 public enum MenuBarDisplayMode: String, CaseIterable, Identifiable {
-    case iconModelAndTokens = "Modelo + Tokens"
-    case iconAndTokens = "Ícone + Tokens"
-    case iconAndAgents = "Ícone + Agentes"
-    case iconOnly = "Apenas Ícone"
+    case iconModelAndTokens = "Model + Tokens"
+    case iconAndTokens = "Tokens Only"
+    case iconAndAgents = "Agents Only"
+    case iconOnly = "Minimal Icon"
 
     public var id: String { rawValue }
 }

@@ -40,7 +40,6 @@ public final class AntigravityWatcher {
 
                 let dbMetrics = queryDatabaseMetrics(dbPath: latestDB.path)
 
-                // 1 token ~= 3.5 to 4 characters of structured payload
                 let estimatedTokens = max(dbMetrics.totalPayloadBytes / 4, dbMetrics.totalSteps * 450)
                 totalEstimatedTokens += estimatedTokens
 
@@ -52,19 +51,19 @@ public final class AntigravityWatcher {
 
                 if isActivelyRunning {
                     executionState = .generating
-                    actionText = "Executando passo #\(dbMetrics.totalSteps) (em processamento)"
+                    actionText = "Executing step #\(dbMetrics.totalSteps) (processing)"
                 } else if isRecent {
                     executionState = .waitingInput
-                    actionText = "\(dbMetrics.totalSteps) passos concluídos - Aguardando prompt"
+                    actionText = "\(dbMetrics.totalSteps) steps completed - awaiting prompt"
                 } else {
                     executionState = .idle
-                    actionText = "Sessão pausada (\(dbMetrics.totalSteps) passos gravados)"
+                    actionText = "Session paused (\(dbMetrics.totalSteps) steps recorded)"
                 }
 
                 let currentModel = UserPreferences.shared.selectedModel
 
                 activeAgents.append(AgentModel(
-                    name: "Antigravity Pair-Programmer",
+                    name: "Antigravity Agent",
                     provider: .antigravity,
                     modelName: currentModel,
                     state: executionState,
@@ -75,7 +74,7 @@ public final class AntigravityWatcher {
                 ))
             }
         } catch {
-            // Ignore error gracefully
+            // Ignore error
         }
 
         return (activeAgents, totalEstimatedTokens)

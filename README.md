@@ -1,73 +1,70 @@
-# Use Token Bar 🤖✨
+# Use Token Bar
 
-**Use Token Bar** é um aplicativo nativo para macOS (Menu Bar / Status Bar) desenvolvido em **Swift** e **SwiftUI** para monitorar em tempo real o consumo de tokens de inteligência artificial e a atividade de agentes autônomos em ferramentas como **Antigravity IDE**, **Codex**, **VS Code** (GitHub Copilot, Cline, Roo Code), **Cursor** e **Ollama**.
-
----
-
-## 🚀 Funcionalidades
-
-- **Ícone Dinâmico na MenuBar**:
-  - Exibe o total de tokens da sessão ou contagem de agentes ativos.
-  - Animação de pulso e indicador verde/laranja em tempo real durante geração de tokens.
-  - Modos configuráveis: *Ícone + Tokens*, *Apenas Ícone* ou *Ícone + Agentes*.
-- **Painel Interativo (Popover)**:
-  - Total de tokens consumidos (Entrada, Saída, Cache).
-  - Estimativa de custo customizável ($/milhão de tokens).
-  - Velocidade em tempo real (tokens por segundo).
-  - Alerta visual quando o consumo ultrapassa o limite da sessão.
-  - Gráfico de histórico recente com interpolação suave via SwiftUI Charts.
-  - Lista de agentes e programas de IA ativos detectados no sistema.
-- **Painel de Configurações Integrado**:
-  - Ajuste de limites de alerta na sessão.
-  - Ajuste de custo por modelo/provedor.
-  - Alteração instantânea do modo de exibição na barra de menus.
-- **Monitoramento Profundo**:
-  - **Antigravity IDE**: Leitura direta via driver C `SQLite3` dos bancos de conversação (`~/.gemini/antigravity-ide/conversations/*.db`) identificando passos ativos (`status = 2`), passos concluídos e tamanho do payload.
-  - **VS Code / Cline / Roo Code**: Monitoramento de tarefas e métricas de extensões em `Application Support/Code/`.
-  - **Ollama**: Verificação assíncrona de modelos disponíveis na API local (`http://localhost:11434/api/tags`).
-  - **Cursor / Codex / Processos**: Detecção de processos do sistema operacional.
+**Use Token Bar** is a lightweight, native macOS Menu Bar application built with **Swift** and **SwiftUI** to monitor real-time AI token consumption, speed, and active agent processes across tools such as **Antigravity IDE**, **Codex**, **VS Code** (GitHub Copilot, Cline, Roo Code), **Cursor**, and **Ollama**.
 
 ---
 
-## ⚡ Instalação Rápida (Linha de Comando)
+## Features
 
-Você pode compilar e instalar o app diretamente em `/Applications` e configurar o utilitário CLI:
+- **Minimal Native Status Bar**:
+  - Live token ticker or agent count.
+  - Optional model name display (e.g., `3.8 Flash • 24.5k`).
+  - Subtle status dot when generating tokens.
+- **Clean Apple Typographic Interface**:
+  - Pure white background with delicate hairline dividers (no card clutter, no unnecessary icons).
+  - Apple Blue fine-line real-time throughput chart.
+  - Active model indicator and one-click model switcher (`Gemini 3.8 Flash`, `Argon Reasoning`, `Claude Opus 5.5`).
+  - Live metric breakdown: Total Tokens, Estimated Cost, Speed (tokens/sec), Input, Output, and Cache.
+  - Active autonomous agent list with live action states.
+- **Deep Local Monitoring**:
+  - **Antigravity IDE**: Real-time read-only SQLite inspection (`~/.gemini/antigravity-ide/conversations/*.db`) querying step states (`status = 2`) and payload sizes.
+  - **VS Code / Cline / Roo Code**: Extension task monitoring in `Application Support/Code/`.
+  - **Ollama**: Local API health and model list polling (`http://localhost:11434/api/tags`).
+  - **Cursor / Codex**: Operating system process detection.
+- **System Integrations**:
+  - Native macOS notifications (`UserNotifications`) when customizable session token thresholds are crossed.
+  - Automatic launch on system boot via `SMAppService` (Launch at Login).
+  - One-click CSV usage report export.
+
+---
+
+## Installation & Setup
+
+### Quick Install (Command Line)
+Compile and install directly to `/Applications` and configure the CLI launcher:
 
 ```bash
 cd ~/Downloads/"Use Token Bar"
 ./scripts/install.sh
-# ou simplesmente:
+# or:
 make install
 ```
 
-### 💻 Como Usar o Comando CLI
-
-Após a instalação, o utilitário `use-token-bar` fica disponível no seu Terminal:
+### CLI Commands
+Once installed, use the `use-token-bar` command from any terminal:
 
 ```bash
-# Iniciar o aplicativo na MenuBar:
+# Launch app in Menu Bar
 use-token-bar
 
-# Verificar status de execução:
+# Check running status
 use-token-bar status
 
-# Encerrar o aplicativo:
+# Terminate app
 use-token-bar stop
 ```
 
 ---
 
-## 🛠️ Tecnologias & Assets
+## Technical Architecture
 
-- **Linguagem**: Swift 5.9+ / Swift 6 (Nativa para macOS).
-- **Frameworks**: SwiftUI, AppKit (`MenuBarExtra`), Charts, Combine, SQLite3 (`libsqlite3`).
-- **Design & Assets**:
-  - Apple SF Symbols com suporte a renderização hierárquica e cores variáveis.
-  - Diretrizes do macOS Human Interface Guidelines.
-  - Configuração `LSUIElement = true` no `Info.plist` (app de status bar sem ícone no Dock).
+- **Language**: Swift 5.9+ / Swift 6 (Native macOS arm64).
+- **Frameworks**: SwiftUI, AppKit (`MenuBarExtra`), Charts, Combine, SQLite3 (`libsqlite3`), ServiceManagement, UserNotifications.
+- **Configuration**: Configured with `LSUIElement = true` in `Info.plist` to run exclusively in the Menu Bar without docking.
+- **Memory Footprint**: < 22 MB RAM with zero background battery impact.
 
 ---
 
-## 📋 Arquitetura e Roadmap
+## License
 
-Consulte o arquivo [PLAN.md](PLAN.md) para detalhes da arquitetura técnica, pipeline de watchers e planejamento das próximas versões.
+MIT License.

@@ -9,23 +9,25 @@ public struct StatsChartView: View {
     }
 
     private let appleBlue = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let textPrimary = Color(red: 0.11, green: 0.11, blue: 0.13)
+    private let textSecondary = Color(red: 0.55, green: 0.55, blue: 0.58)
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Vazão e Histórico de Tokens")
+                Text("Token Throughput")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Color(red: 0.12, green: 0.12, blue: 0.14))
+                    .foregroundColor(textPrimary)
                 Spacer()
-                Text("Últimas horas")
+                Text("Recent activity")
                     .font(.system(size: 11))
-                    .foregroundColor(Color(red: 0.55, green: 0.55, blue: 0.58))
+                    .foregroundColor(textSecondary)
             }
 
             Chart {
                 ForEach(history) { point in
                     LineMark(
-                        x: .value("Hora", point.timestamp),
+                        x: .value("Time", point.timestamp),
                         y: .value("Tokens", point.tokens)
                     )
                     .interpolationMethod(.catmullRom)
@@ -33,13 +35,13 @@ public struct StatsChartView: View {
                     .foregroundStyle(appleBlue)
 
                     AreaMark(
-                        x: .value("Hora", point.timestamp),
+                        x: .value("Time", point.timestamp),
                         y: .value("Tokens", point.tokens)
                     )
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [appleBlue.opacity(0.12), appleBlue.opacity(0.01)],
+                            colors: [appleBlue.opacity(0.12), appleBlue.opacity(0.005)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -50,7 +52,7 @@ public struct StatsChartView: View {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
                     AxisValueLabel(format: .dateTime.hour().minute())
                         .font(.system(size: 9, weight: .regular))
-                        .foregroundStyle(Color(red: 0.55, green: 0.55, blue: 0.58))
+                        .foregroundStyle(textSecondary)
                 }
             }
             .chartYAxis {
@@ -58,18 +60,12 @@ public struct StatsChartView: View {
                     if let val = value.as(Int.self) {
                         AxisValueLabel(TokenStats.formattedNumber(val))
                             .font(.system(size: 9, design: .monospaced))
-                            .foregroundStyle(Color(red: 0.55, green: 0.55, blue: 0.58))
+                            .foregroundStyle(textSecondary)
                     }
                 }
             }
-            .frame(height: 115)
+            .frame(height: 120)
         }
-        .padding(14)
-        .background(Color(red: 0.975, green: 0.978, blue: 0.985))
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.black.opacity(0.05), lineWidth: 1)
-        )
+        .padding(.vertical, 4)
     }
 }

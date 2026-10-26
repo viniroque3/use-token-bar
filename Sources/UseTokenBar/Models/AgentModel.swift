@@ -1,10 +1,10 @@
 import Foundation
 
 public enum AgentExecutionState: String, Codable {
-    case generating = "Gerando Tokens"
-    case executingTool = "Executando Ação"
-    case waitingInput = "Aguardando Usuário"
-    case idle = "Em Espera"
+    case generating = "Generating"
+    case executingTool = "Running Tool"
+    case waitingInput = "Awaiting Prompt"
+    case idle = "Idle"
 
     public var statusColorName: String {
         switch self {
@@ -33,7 +33,7 @@ public struct AgentModel: Identifiable, Codable {
         provider: AIAppProvider,
         modelName: String = "Gemini 3.8 Flash",
         state: AgentExecutionState = .idle,
-        currentAction: String = "Ocioso",
+        currentAction: String = "Idle",
         tokensSession: Int = 0,
         startedAt: Date = Date(),
         lastActivityAt: Date = Date()

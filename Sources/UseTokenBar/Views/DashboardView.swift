@@ -7,82 +7,53 @@ public struct DashboardView: View {
     private let appleBlue = Color(red: 0.0, green: 0.478, blue: 1.0)
     private let textPrimary = Color(red: 0.11, green: 0.11, blue: 0.13)
     private let textSecondary = Color(red: 0.55, green: 0.55, blue: 0.58)
-    private let cardBackground = Color(red: 0.975, green: 0.978, blue: 0.985)
 
     public init(aggregator: TokenAggregator = .shared) {
         self.aggregator = aggregator
     }
 
     public var body: some View {
-        VStack(spacing: 14) {
-            // Header
+        VStack(alignment: .leading, spacing: 14) {
+            // Header (No icons, clean typography & text actions)
             HStack(alignment: .center) {
-                HStack(spacing: 9) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(appleBlue)
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Use Token Bar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(textPrimary)
-                        Text("Monitor de IA em Tempo Real")
-                            .font(.system(size: 11))
-                            .foregroundColor(textSecondary)
-                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Use Token Bar")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(textPrimary)
+                    Text("Real-Time AI Token Monitor")
+                        .font(.system(size: 11))
+                        .foregroundColor(textSecondary)
                 }
 
                 Spacer()
 
-                HStack(spacing: 8) {
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                HStack(spacing: 12) {
+                    Button(preferences.showingSettings ? "Close" : "Settings") {
+                        withAnimation(.easeInOut(duration: 0.15)) {
                             preferences.showingSettings.toggle()
                         }
-                    }) {
-                        Image(systemName: preferences.showingSettings ? "xmark" : "gearshape")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(preferences.showingSettings ? appleBlue : textSecondary)
-                            .frame(width: 28, height: 28)
-                            .background(cardBackground)
-                            .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
-                    .help(preferences.showingSettings ? "Voltar ao painel" : "Configurações")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(appleBlue)
 
-                    Button(action: {
+                    Button("Refresh") {
                         aggregator.refreshMetrics()
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(textSecondary)
-                            .frame(width: 28, height: 28)
-                            .background(cardBackground)
-                            .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
-                    .help("Atualizar métricas agora")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(textSecondary)
 
-                    Button(action: {
+                    Button("Quit") {
                         NSApplication.shared.terminate(nil)
-                    }) {
-                        Image(systemName: "power")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(Color(red: 1.0, green: 0.27, blue: 0.23))
-                            .frame(width: 28, height: 28)
-                            .background(cardBackground)
-                            .cornerRadius(8)
                     }
                     .buttonStyle(.plain)
-                    .help("Encerrar aplicativo")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(Color(red: 0.85, green: 0.25, blue: 0.20))
                 }
             }
-            .padding(.bottom, 2)
+
+            Divider()
 
             if preferences.showingSettings {
                 settingsView
@@ -90,7 +61,7 @@ public struct DashboardView: View {
                 mainDashboardView
             }
         }
-        .padding(18)
+        .padding(20)
         .frame(width: 450)
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -102,58 +73,33 @@ public struct DashboardView: View {
 
     @ViewBuilder
     private var mainDashboardView: some View {
-        // Active AI Model Card & Selector (No pills, clean rounded rectangles)
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(appleBlue.opacity(0.10))
-                        .frame(width: 40, height: 40)
-                    Image(systemName: "cpu.fill")
-                        .font(.system(size: 17))
-                        .foregroundColor(appleBlue)
-                }
-
+        // Active Model Section (No card, flat typographic row)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text("IA Em Uso:")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(textSecondary)
-                        Text(preferences.selectedModel)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(textPrimary)
-                    }
-
-                    Text("Raciocínio & Geração Ativa • Contexto Estendido")
-                        .font(.system(size: 10))
+                    Text("ACTIVE MODEL")
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(textSecondary)
+                        .tracking(0.5)
+
+                    Text(preferences.selectedModel)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(textPrimary)
                 }
 
                 Spacer()
 
-                // Minimal status dot and clean text without pill container
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     Circle()
                         .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : Color(red: 1.0, green: 0.58, blue: 0.0))
-                        .frame(width: 7, height: 7)
-                    Text(aggregator.isGenerating ? "Processando" : "Pronto")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(aggregator.isGenerating ? Color(red: 0.15, green: 0.65, blue: 0.30) : Color(red: 0.85, green: 0.45, blue: 0.0))
+                        .frame(width: 6, height: 6)
+                    Text(aggregator.isGenerating ? "Processing" : "Ready")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(aggregator.isGenerating ? Color(red: 0.15, green: 0.65, blue: 0.30) : textSecondary)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.black.opacity(0.03))
-                .cornerRadius(6)
             }
-            .padding(12)
-            .background(cardBackground)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.black.opacity(0.05), lineWidth: 1)
-            )
 
-            // Model Selector Buttons (Sleek Apple tab cards, no pills)
+            // Minimal Model Quick Switcher Tabs
             HStack(spacing: 8) {
                 ForEach(["Gemini 3.8 Flash", "Argon Reasoning", "Claude Opus 5.5"], id: \.self) { model in
                     let isSelected = preferences.selectedModel == model
@@ -161,161 +107,182 @@ public struct DashboardView: View {
                         preferences.selectedModel = model
                         aggregator.refreshMetrics()
                     }) {
-                        HStack(spacing: 5) {
-                            if isSelected {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 9, weight: .bold))
-                            }
-                            Text(model.replacingOccurrences(of: "Gemini ", with: "").replacingOccurrences(of: "Claude ", with: "").replacingOccurrences(of: " Reasoning", with: ""))
-                                .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(isSelected ? appleBlue.opacity(0.12) : cardBackground)
-                        .foregroundColor(isSelected ? appleBlue : textSecondary)
-                        .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isSelected ? appleBlue.opacity(0.35) : Color.black.opacity(0.04), lineWidth: 1)
-                        )
+                        Text(model.replacingOccurrences(of: "Gemini ", with: "").replacingOccurrences(of: "Claude ", with: "").replacingOccurrences(of: " Reasoning", with: ""))
+                            .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(isSelected ? appleBlue.opacity(0.10) : Color.black.opacity(0.03))
+                            .foregroundColor(isSelected ? appleBlue : textSecondary)
+                            .cornerRadius(6)
                     }
                     .buttonStyle(.plain)
                 }
+                Spacer()
             }
         }
 
         // Export Feedback message
         if let msg = preferences.exportStatusMessage {
-            HStack(spacing: 7) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.35))
-                    .font(.system(size: 11))
-                Text(msg)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(textPrimary)
-                Spacer()
-            }
-            .padding(8)
-            .background(Color(red: 0.20, green: 0.78, blue: 0.35).opacity(0.10))
-            .cornerRadius(8)
+            Text(msg)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(appleBlue)
+                .padding(.vertical, 2)
         }
 
-        // Alert banner if threshold exceeded
+        // Alert message if threshold exceeded
         if aggregator.stats.totalTokens > preferences.alertThresholdTokens {
-            HStack(spacing: 7) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(Color(red: 1.0, green: 0.58, blue: 0.0))
-                    .font(.system(size: 11))
-                Text("Limite da sessão atingido (\(TokenStats.formattedNumber(preferences.alertThresholdTokens)))")
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color(red: 1.0, green: 0.58, blue: 0.0))
+                    .frame(width: 6, height: 6)
+                Text("Session token threshold exceeded (\(TokenStats.formattedNumber(preferences.alertThresholdTokens)))")
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(textPrimary)
-                Spacer()
-            }
-            .padding(8)
-            .background(Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.10))
-            .cornerRadius(8)
-        }
-
-        // Metrics Grid (Clean white cards with subtle border)
-        HStack(spacing: 10) {
-            MetricCard(
-                title: "Total Tokens",
-                value: TokenStats.formattedNumber(aggregator.stats.totalTokens),
-                caption: "Sessão Atual",
-                icon: "chart.bar.fill",
-                iconColor: appleBlue
-            )
-
-            MetricCard(
-                title: "Custo Estimado",
-                value: String(format: "$%.3f", aggregator.stats.estimatedCostUSD),
-                caption: "US$ \(String(format: "%.2f", preferences.costPerMillionTokens))/M",
-                icon: "dollarsign.circle.fill",
-                iconColor: Color(red: 0.20, green: 0.78, blue: 0.35)
-            )
-
-            MetricCard(
-                title: "Velocidade",
-                value: String(format: "%.0f t/s", aggregator.stats.tokensPerSecond),
-                caption: aggregator.isGenerating ? "Ativo" : "Ocioso",
-                icon: "bolt.fill",
-                iconColor: aggregator.isGenerating ? Color(red: 1.0, green: 0.58, blue: 0.0) : textSecondary
-            )
-        }
-
-        // Unified Token Breakdown Bar (No isolated pills! Single clean rectangular card with dividers)
-        HStack(spacing: 0) {
-            BreakdownSection(title: "Entrada", count: aggregator.stats.inputTokens, dotColor: appleBlue)
-            Divider().frame(height: 18)
-            BreakdownSection(title: "Saída", count: aggregator.stats.outputTokens, dotColor: Color(red: 0.58, green: 0.30, blue: 0.90))
-            Divider().frame(height: 18)
-            BreakdownSection(title: "Cache", count: aggregator.stats.cachedTokens, dotColor: Color(red: 0.20, green: 0.78, blue: 0.35))
-        }
-        .padding(.vertical, 7)
-        .background(cardBackground)
-        .cornerRadius(10)
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.black.opacity(0.04), lineWidth: 1)
-        )
-
-        // Historical Chart with Apple Blue Fine Line
-        StatsChartView(history: aggregator.historyPoints)
-
-        // Active Agents Section
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Agentes e Programas Conectados")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(textPrimary)
-                Spacer()
-                Text("\(aggregator.activeAgents.count) detectados")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundColor(textSecondary)
-            }
-
-            if aggregator.activeAgents.isEmpty {
-                HStack {
-                    Spacer()
-                    Text("Nenhum agente em execução detectado.")
-                        .font(.system(size: 11))
-                        .foregroundColor(textSecondary)
-                    Spacer()
-                }
-                .padding(.vertical, 14)
-            } else {
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(aggregator.activeAgents) { agent in
-                            AgentRowView(agent: agent)
-                        }
-                    }
-                }
-                .frame(maxHeight: 155)
+                    .foregroundColor(Color(red: 0.85, green: 0.45, blue: 0.0))
             }
         }
 
         Divider()
 
-        // Footer with Clean Typography
+        // Metrics Columns (No boxes, pure typographic columns separated by thin vertical dividers)
+        HStack(alignment: .top, spacing: 0) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("TOTAL TOKENS")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(textSecondary)
+                    .tracking(0.5)
+                Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
+                    .font(.system(size: 21, weight: .bold, design: .monospaced))
+                    .foregroundColor(textPrimary)
+                Text("Current session")
+                    .font(.system(size: 10))
+                    .foregroundColor(textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Divider().frame(height: 48)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("ESTIMATED COST")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(textSecondary)
+                    .tracking(0.5)
+                Text(String(format: "$%.3f", aggregator.stats.estimatedCostUSD))
+                    .font(.system(size: 21, weight: .bold, design: .monospaced))
+                    .foregroundColor(textPrimary)
+                Text(String(format: "$%.2f / 1M", preferences.costPerMillionTokens))
+                    .font(.system(size: 10))
+                    .foregroundColor(textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 14)
+
+            Divider().frame(height: 48)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("SPEED")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(textSecondary)
+                    .tracking(0.5)
+                Text(String(format: "%.0f t/s", aggregator.stats.tokensPerSecond))
+                    .font(.system(size: 21, weight: .bold, design: .monospaced))
+                    .foregroundColor(textPrimary)
+                Text(aggregator.isGenerating ? "Active streaming" : "Idle")
+                    .font(.system(size: 10))
+                    .foregroundColor(textSecondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 14)
+        }
+        .padding(.vertical, 2)
+
+        Divider()
+
+        // Token Breakdown Row (No cards, flat typographic split)
         HStack {
-            Button(action: {
+            HStack(spacing: 5) {
+                Circle().fill(appleBlue).frame(width: 5, height: 5)
+                Text("Input:")
+                    .font(.system(size: 11))
+                    .foregroundColor(textSecondary)
+                Text(TokenStats.formattedNumber(aggregator.stats.inputTokens))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(textPrimary)
+            }
+            Spacer()
+            HStack(spacing: 5) {
+                Circle().fill(Color(red: 0.58, green: 0.30, blue: 0.90)).frame(width: 5, height: 5)
+                Text("Output:")
+                    .font(.system(size: 11))
+                    .foregroundColor(textSecondary)
+                Text(TokenStats.formattedNumber(aggregator.stats.outputTokens))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(textPrimary)
+            }
+            Spacer()
+            HStack(spacing: 5) {
+                Circle().fill(Color(red: 0.20, green: 0.78, blue: 0.35)).frame(width: 5, height: 5)
+                Text("Cache:")
+                    .font(.system(size: 11))
+                    .foregroundColor(textSecondary)
+                Text(TokenStats.formattedNumber(aggregator.stats.cachedTokens))
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(textPrimary)
+            }
+        }
+        .padding(.vertical, 2)
+
+        Divider()
+
+        // Chart Section (Flat on white background)
+        StatsChartView(history: aggregator.historyPoints)
+
+        Divider()
+
+        // Connected Agents Section
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("CONNECTED AGENTS")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(textSecondary)
+                    .tracking(0.5)
+                Spacer()
+                Text("\(aggregator.activeAgents.count) active")
+                    .font(.system(size: 11))
+                    .foregroundColor(textSecondary)
+            }
+
+            if aggregator.activeAgents.isEmpty {
+                Text("No active agent processes detected.")
+                    .font(.system(size: 11))
+                    .foregroundColor(textSecondary)
+                    .padding(.vertical, 8)
+            } else {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(aggregator.activeAgents) { agent in
+                            AgentRowView(agent: agent)
+                        }
+                    }
+                }
+                .frame(maxHeight: 140)
+            }
+        }
+
+        Divider()
+
+        // Footer
+        HStack {
+            Button("Export CSV") {
                 if let url = ExportReportService.shared.exportCSV(stats: aggregator.stats, agents: aggregator.activeAgents, model: preferences.selectedModel) {
-                    preferences.exportStatusMessage = "CSV exportado: \(url.lastPathComponent)"
+                    preferences.exportStatusMessage = "CSV exported: \(url.lastPathComponent)"
                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
                         preferences.exportStatusMessage = nil
                     }
                 }
-            }) {
-                HStack(spacing: 5) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 11))
-                    Text("Exportar CSV")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .foregroundColor(appleBlue)
             }
             .buttonStyle(.plain)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(appleBlue)
 
             Spacer()
 
@@ -325,25 +292,25 @@ public struct DashboardView: View {
 
             Spacer()
 
-            Button("Zerar Sessão") {
+            Button("Reset Session") {
                 aggregator.stats = TokenStats()
                 aggregator.refreshMetrics()
             }
             .buttonStyle(.plain)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundColor(textPrimary)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(textSecondary)
         }
     }
 
     @ViewBuilder
     private var settingsView: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Configurações do Monitor")
+            Text("Settings")
                 .font(.system(size: 15, weight: .bold))
                 .foregroundColor(textPrimary)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Modelo Padrão")
+                Text("Default Active Model")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(textSecondary)
 
@@ -362,7 +329,7 @@ public struct DashboardView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Formato na Barra de Menus")
+                Text("Menu Bar Display Format")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(textSecondary)
 
@@ -377,12 +344,12 @@ public struct DashboardView: View {
                 .pickerStyle(.segmented)
             }
 
-            VStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
                 Toggle(isOn: Binding(
                     get: { preferences.notificationsEnabled },
                     set: { preferences.notificationsEnabled = $0 }
                 )) {
-                    Text("Notificações do macOS ao atingir limite")
+                    Text("macOS System Notifications on Threshold")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(textPrimary)
                 }
@@ -392,19 +359,16 @@ public struct DashboardView: View {
                     get: { LaunchAtLoginService.shared.isEnabled },
                     set: { _ = LaunchAtLoginService.shared.setEnabled($0) }
                 )) {
-                    Text("Iniciar automaticamente com o macOS (Login)")
+                    Text("Launch automatically at login")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(textPrimary)
                 }
                 .toggleStyle(.checkbox)
             }
-            .padding(10)
-            .background(cardBackground)
-            .cornerRadius(10)
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Custo por 1M de Tokens:")
+                    Text("Cost per 1M Tokens:")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(textSecondary)
                     Spacer()
@@ -420,7 +384,7 @@ public struct DashboardView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Alerta de Limite na Sessão:")
+                    Text("Session Alert Threshold:")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(textSecondary)
                     Spacer()
@@ -437,7 +401,7 @@ public struct DashboardView: View {
             Divider()
 
             HStack {
-                Button("Restaurar Padrões") {
+                Button("Reset Defaults") {
                     preferences.displayMode = MenuBarDisplayMode.iconModelAndTokens.rawValue
                     preferences.selectedModel = "Gemini 3.8 Flash"
                     preferences.costPerMillionTokens = 2.50
@@ -452,7 +416,7 @@ public struct DashboardView: View {
 
                 Spacer()
 
-                Button("Concluído") {
+                Button("Done") {
                     withAnimation {
                         preferences.showingSettings = false
                     }
@@ -462,59 +426,5 @@ public struct DashboardView: View {
             }
         }
         .padding(.vertical, 4)
-    }
-}
-
-struct MetricCard: View {
-    let title: String
-    let value: String
-    let caption: String
-    let icon: String
-    let iconColor: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundColor(iconColor)
-                Spacer()
-            }
-            Text(value)
-                .font(.system(size: 17, weight: .bold, design: .monospaced))
-                .foregroundColor(Color(red: 0.11, green: 0.11, blue: 0.13))
-            Text(caption)
-                .font(.system(size: 10))
-                .foregroundColor(Color(red: 0.55, green: 0.55, blue: 0.58))
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(red: 0.975, green: 0.978, blue: 0.985))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.black.opacity(0.04), lineWidth: 1)
-        )
-    }
-}
-
-struct BreakdownSection: View {
-    let title: String
-    let count: Int
-    let dotColor: Color
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(dotColor)
-                .frame(width: 6, height: 6)
-            Text("\(title):")
-                .font(.system(size: 10, weight: .regular))
-                .foregroundColor(Color(red: 0.55, green: 0.55, blue: 0.58))
-            Text(TokenStats.formattedNumber(count))
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundColor(Color(red: 0.15, green: 0.15, blue: 0.18))
-        }
-        .frame(maxWidth: .infinity)
     }
 }
