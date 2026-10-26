@@ -15,11 +15,12 @@
 
 ---
 
-## Overview
-
-**Use Token Bar** is a native macOS application that lives in your Menu Bar, delivering live visibility into your AI token consumption, streaming speed, estimated costs, and autonomous agent tasks across coding environments — without the bulk of web-wrapped desktop widgets.
-
-Built natively in **Swift** and **SwiftUI** using Apple's Human Interface Guidelines, it operates on a flat, minimalist canvas with thin dividers and pure typography.
+<div align="center">
+  <img src="assets/screenshots/dashboard.png" width="380" alt="Use Token Bar Dashboard" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="assets/screenshots/settings.png" width="380" alt="Use Token Bar Settings & History" />
+  <p><em>Use Token Bar in action: Real-Time Token Monitor, Daily Timeline, and Configurable Settings</em></p>
+</div>
 
 ---
 
@@ -34,7 +35,8 @@ Built natively in **Swift** and **SwiftUI** using Apple's Human Interface Guidel
   - **Local LLMs**: Discovers active Ollama endpoints (`http://localhost:11434/api/tags`).
   - **CLI Agents & Cursor**: Background process detection with Darwin process tables.
 - **Configurable Cost & Thresholds**: Set custom pricing per million tokens and trigger native macOS system notifications when reaching session limits.
-- **Session Reports**: Export detailed usage audits directly to CSV with a single click.
+- **Desktop Floating Widgets**: Movable Small and Large desktop widgets displaying live tokens, speed, and real-time charts.
+- **Daily Token History & Export**: Automatically logs the first 30 interactions of the day with instant export to **Excel (.xls)** and **CSV**.
 - **Launch at Login**: Native startup management powered by `SMAppService`.
 
 ---
