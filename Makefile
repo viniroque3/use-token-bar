@@ -1,4 +1,4 @@
-.PHONY: all build install run package clean
+.PHONY: all build install run package dmg clean
 
 all: build
 
@@ -8,10 +8,13 @@ build:
 install:
 	@./scripts/install.sh
 
+dmg:
+	@./scripts/build_dmg.sh
+
 run:
 	@open "/Applications/Use Token Bar.app" 2>/dev/null || open "dist/Use Token Bar.app"
 
-package: build
+package: build dmg
 	@echo "Creating distributable release archive..."
 	@cd dist && zip -rq "UseTokenBar-v1.0.0.zip" "Use Token Bar.app"
 	@echo "Release archive created: dist/UseTokenBar-v1.0.0.zip"
