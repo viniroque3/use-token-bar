@@ -82,8 +82,8 @@ public struct DesktopWidgetView: View {
                     .tracking(0.5)
 
                 Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
-                    .font(.system(size: 22, weight: .bold, design: .monospaced))
-                    .foregroundColor(textPrimary)
+                    .font(.system(size: 24, weight: .light, design: .rounded))
+                    .foregroundColor(appleBlue)
             }
 
             Spacer(minLength: 0)
@@ -137,8 +137,8 @@ public struct DesktopWidgetView: View {
                         .foregroundColor(textSecondary)
                         .tracking(0.5)
                     Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
-                        .font(.system(size: 18, weight: .bold, design: .monospaced))
-                        .foregroundColor(textPrimary)
+                        .font(.system(size: 20, weight: .light, design: .rounded))
+                        .foregroundColor(appleBlue)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -181,23 +181,32 @@ public struct DesktopWidgetView: View {
             HStack {
                 HStack(spacing: 4) {
                     Circle().fill(appleBlue).frame(width: 5, height: 5)
-                    Text("In: \(TokenStats.formattedNumber(aggregator.stats.inputTokens))")
-                        .font(.system(size: 10, design: .monospaced))
+                    Text("In:")
+                        .font(.system(size: 10))
                         .foregroundColor(textSecondary)
+                    Text(TokenStats.formattedNumber(aggregator.stats.inputTokens))
+                        .font(.system(size: 10, weight: .light, design: .rounded))
+                        .foregroundColor(appleBlue)
                 }
                 Spacer()
                 HStack(spacing: 4) {
                     Circle().fill(Color(red: 0.58, green: 0.30, blue: 0.90)).frame(width: 5, height: 5)
-                    Text("Out: \(TokenStats.formattedNumber(aggregator.stats.outputTokens))")
-                        .font(.system(size: 10, design: .monospaced))
+                    Text("Out:")
+                        .font(.system(size: 10))
                         .foregroundColor(textSecondary)
+                    Text(TokenStats.formattedNumber(aggregator.stats.outputTokens))
+                        .font(.system(size: 10, weight: .light, design: .rounded))
+                        .foregroundColor(appleBlue)
                 }
                 Spacer()
                 HStack(spacing: 4) {
                     Circle().fill(Color(red: 0.20, green: 0.78, blue: 0.35)).frame(width: 5, height: 5)
-                    Text("Cache: \(TokenStats.formattedNumber(aggregator.stats.cachedTokens))")
-                        .font(.system(size: 10, design: .monospaced))
+                    Text("Cache:")
+                        .font(.system(size: 10))
                         .foregroundColor(textSecondary)
+                    Text(TokenStats.formattedNumber(aggregator.stats.cachedTokens))
+                        .font(.system(size: 10, weight: .light, design: .rounded))
+                        .foregroundColor(appleBlue)
                 }
             }
         }

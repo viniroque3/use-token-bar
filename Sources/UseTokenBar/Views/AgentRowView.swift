@@ -44,8 +44,8 @@ public struct AgentRowView: View {
                     .foregroundColor(textSecondary)
                 Spacer()
                 Text("\(TokenStats.formattedNumber(agent.tokensSession)) tokens")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundColor(textPrimary)
+                    .font(.system(size: 11, weight: .light, design: .rounded))
+                    .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
             }
 
             Divider()

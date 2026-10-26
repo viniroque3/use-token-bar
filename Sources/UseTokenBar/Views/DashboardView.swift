@@ -81,7 +81,7 @@ public struct DashboardView: View {
 
     @ViewBuilder
     private var mainDashboardView: some View {
-        // Active Model Section: Shows ONLY models actually in use right now
+        // Active Model Section
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -168,16 +168,16 @@ public struct DashboardView: View {
 
         Divider()
 
-        // Metrics Columns
+        // Metrics Columns: Tokens styled with Apple Blue fine-line font
         HStack(alignment: .top, spacing: 0) {
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("TOTAL TOKENS")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(textSecondary)
                     .tracking(0.5)
                 Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
-                    .font(.system(size: 21, weight: .bold, design: .monospaced))
-                    .foregroundColor(textPrimary)
+                    .font(.system(size: 24, weight: .light, design: .rounded))
+                    .foregroundColor(appleBlue)
                 Text("Current session")
                     .font(.system(size: 10))
                     .foregroundColor(textSecondary)
@@ -186,13 +186,13 @@ public struct DashboardView: View {
 
             Divider().frame(height: 48)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("ESTIMATED COST")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(textSecondary)
                     .tracking(0.5)
                 Text(String(format: "$%.3f", aggregator.stats.estimatedCostUSD))
-                    .font(.system(size: 21, weight: .bold, design: .monospaced))
+                    .font(.system(size: 24, weight: .light, design: .rounded))
                     .foregroundColor(textPrimary)
                 Text(String(format: "$%.2f / 1M", preferences.costPerMillionTokens))
                     .font(.system(size: 10))
@@ -203,13 +203,13 @@ public struct DashboardView: View {
 
             Divider().frame(height: 48)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("SPEED")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(textSecondary)
                     .tracking(0.5)
                 Text(String(format: "%.0f t/s", aggregator.stats.tokensPerSecond))
-                    .font(.system(size: 21, weight: .bold, design: .monospaced))
+                    .font(.system(size: 24, weight: .light, design: .rounded))
                     .foregroundColor(textPrimary)
                 Text(aggregator.isGenerating ? "Active streaming" : "Idle")
                     .font(.system(size: 10))
@@ -222,7 +222,7 @@ public struct DashboardView: View {
 
         Divider()
 
-        // Token Breakdown Row
+        // Token Breakdown Row with Apple Blue fine-line numbers
         HStack {
             HStack(spacing: 5) {
                 Circle().fill(appleBlue).frame(width: 5, height: 5)
@@ -230,8 +230,8 @@ public struct DashboardView: View {
                     .font(.system(size: 11))
                     .foregroundColor(textSecondary)
                 Text(TokenStats.formattedNumber(aggregator.stats.inputTokens))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(textPrimary)
+                    .font(.system(size: 12, weight: .light, design: .rounded))
+                    .foregroundColor(appleBlue)
             }
             Spacer()
             HStack(spacing: 5) {
@@ -240,8 +240,8 @@ public struct DashboardView: View {
                     .font(.system(size: 11))
                     .foregroundColor(textSecondary)
                 Text(TokenStats.formattedNumber(aggregator.stats.outputTokens))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(textPrimary)
+                    .font(.system(size: 12, weight: .light, design: .rounded))
+                    .foregroundColor(appleBlue)
             }
             Spacer()
             HStack(spacing: 5) {
@@ -250,8 +250,8 @@ public struct DashboardView: View {
                     .font(.system(size: 11))
                     .foregroundColor(textSecondary)
                 Text(TokenStats.formattedNumber(aggregator.stats.cachedTokens))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                    .foregroundColor(textPrimary)
+                    .font(.system(size: 12, weight: .light, design: .rounded))
+                    .foregroundColor(appleBlue)
             }
         }
         .padding(.vertical, 2)

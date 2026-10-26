@@ -27,7 +27,7 @@ public struct StatsChartView: View {
                 if let hovered = aggregator.hoveredPoint {
                     HStack(spacing: 4) {
                         Text(TokenStats.formattedNumber(hovered.tokens))
-                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .font(.system(size: 12, weight: .light, design: .rounded))
                             .foregroundColor(appleBlue)
                         Text("tokens at \(hovered.timestamp.formatted(date: .omitted, time: .standard))")
                             .font(.system(size: 11, weight: .medium))

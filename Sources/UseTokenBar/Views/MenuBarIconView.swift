@@ -26,11 +26,20 @@ public struct MenuBarIconView: View {
                 .frame(width: 6, height: 6)
 
             if preferences.displayMode == MenuBarDisplayMode.iconModelAndTokens.rawValue {
-                Text("\(modelShortName) • \(TokenStats.formattedNumber(aggregator.stats.totalTokens))")
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                HStack(spacing: 3) {
+                    Text(modelShortName)
+                        .font(.system(size: 11, weight: .medium))
+                    Text("•")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
+                        .font(.system(size: 11, weight: .light, design: .monospaced))
+                        .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
+                }
             } else if preferences.displayMode == MenuBarDisplayMode.iconAndTokens.rawValue {
                 Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 11, weight: .light, design: .monospaced))
+                    .foregroundColor(Color(red: 0.0, green: 0.478, blue: 1.0))
             } else if preferences.displayMode == MenuBarDisplayMode.iconAndAgents.rawValue {
                 Text("\(aggregator.activeAgents.count) agents")
                     .font(.system(size: 11, weight: .semibold))
