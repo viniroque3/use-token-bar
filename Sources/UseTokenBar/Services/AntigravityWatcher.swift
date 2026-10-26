@@ -34,6 +34,16 @@ public final class AntigravityWatcher {
                     return d1 > d2
                 }
 
+            // Aggregate tokens from all conversations active today to maintain true cumulative total
+            for dbFile in dbFiles {
+                if let mod = (try? dbFile.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
+                   Calendar.current.isDateInToday(mod) {
+                    let m = queryDatabaseMetrics(dbPath: dbFile.path)
+                    let est = max(m.totalPayloadBytes / 4, m.totalSteps * 450)
+                    totalEstimatedTokens += est
+                }
+            }
+
             if let latestDB = dbFiles.first {
                 let values = try? latestDB.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
                 let modDate = values?.contentModificationDate ?? Date()
@@ -41,7 +51,7 @@ public final class AntigravityWatcher {
                 let dbMetrics = queryDatabaseMetrics(dbPath: latestDB.path)
 
                 let estimatedTokens = max(dbMetrics.totalPayloadBytes / 4, dbMetrics.totalSteps * 450)
-                totalEstimatedTokens += estimatedTokens
+                // Total tokens are aggregated across all today's active sessions
 
                 let isActivelyRunning = dbMetrics.activeStepsCount > 0
                 let isRecent = Date().timeIntervalSince(modDate) < 600
@@ -338,6 +348,7 @@ public final class AntigravityWatcher {
 
         let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX
         if sqlite3_open_v2(dbPath, &db, flags, nil) == SQLITE_OK {
+            sqlite3_busy_timeout(db, 3000)
             let sql = "SELECT count(*), sum(case when status = 2 then 1 else 0 end), coalesce(sum(length(step_payload)), 0) FROM steps;"
             var stmt: OpaquePointer?
             if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
@@ -351,5 +362,34 @@ public final class AntigravityWatcher {
         }
         sqlite3_close(db)
         return metrics
+    }
+
+    public func detectActiveModel() -> String {
+        let convDir = antigravityDir.appendingPathComponent("conversations")
+        if let files = try? fileManager.contentsOfDirectory(at: convDir, includingPropertiesForKeys: [.contentModificationDateKey], options: .skipsHiddenFiles) {
+            let dbs = files.filter { $0.pathExtension == "db" }.sorted {
+                let d1 = (try? $0.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                let d2 = (try? $1.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                return d1 > d2
+            }
+            if let latest = dbs.first {
+                let brainDir = antigravityDir.appendingPathComponent("brain")
+                let convId = latest.deletingPathExtension().lastPathComponent
+                let transcriptURL = brainDir.appendingPathComponent(convId).appendingPathComponent(".system_generated/logs/transcript.jsonl")
+                if let data = try? Data(contentsOf: transcriptURL, options: .mappedIfSafe),
+                   let snippet = String(data: data.prefix(8192), encoding: .utf8) {
+                    if snippet.contains("gemini-3.8-flash") || snippet.contains("3.8 Flash") {
+                        return "Gemini 3.8 Flash"
+                    } else if snippet.contains("gemini-2.5-pro") || snippet.contains("2.5 Pro") {
+                        return "Gemini 2.5 Pro"
+                    } else if snippet.contains("claude-3-5-sonnet") {
+                        return "Claude 3.5 Sonnet"
+                    } else if snippet.contains("gpt-4o") {
+                        return "GPT-4o"
+                    }
+                }
+            }
+        }
+        return "Gemini 3.8 Flash"
     }
 }

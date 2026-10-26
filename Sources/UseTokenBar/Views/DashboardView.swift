@@ -339,8 +339,7 @@ public struct DashboardView: View {
             Spacer()
 
             Button("Reset Session") {
-                aggregator.stats = TokenStats()
-                aggregator.refreshMetrics()
+                aggregator.resetSession()
             }
             .buttonStyle(.plain)
             .font(.system(size: 11, weight: .medium))
@@ -376,22 +375,32 @@ public struct DashboardView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Default Active Model")
+                Text("Active Model (Auto-Detected)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(textSecondary)
 
-                Picker("", selection: Binding(
-                    get: { preferences.selectedModel },
-                    set: {
-                        preferences.selectedModel = $0
-                        aggregator.refreshMetrics()
-                    }
-                )) {
-                    ForEach(UserPreferences.availablePresetModels, id: \.self) { model in
-                        Text(model).tag(model)
-                    }
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color(red: 0.20, green: 0.78, blue: 0.35))
+                        .frame(width: 7, height: 7)
+
+                    Text(aggregator.detectedActiveModel)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(textPrimary)
+
+                    Spacer()
+
+                    Text("Live Detection")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(appleBlue)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(appleBlue.opacity(0.1))
+                        .cornerRadius(5)
                 }
-                .pickerStyle(.menu)
+                .padding(10)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
+                .cornerRadius(8)
             }
 
             VStack(alignment: .leading, spacing: 6) {
