@@ -18,11 +18,12 @@
 
 ## 2. Escolha da Linguagem e Stack Tecnológica
 
-### Linguagem Escolhida: **Swift 5.9+ / 6 (SwiftUI + AppKit + SQLite3)**
+### Linguagem Escolhida: **Swift 5.9+ / 6 (SwiftUI + AppKit + SQLite3 + ServiceManagement + UserNotifications)**
 
-- **Desempenho e Consumo Mínimo de Recursos**: Uso de memória < 20MB, zero consumo perceptível de bateria e CPU idle < 0.2%.
+- **Desempenho e Consumo Mínimo de Recursos**: Uso de memória < 22MB, zero consumo perceptível de bateria e CPU idle < 0.2%.
 - **Integração Nativa com o macOS**: `MenuBarExtra` com estilo `.window` para popover fluido, `LSUIElement` para ocultação do ícone no Dock.
 - **Leitura Nativa de Bancos de Dados**: Driver C `libsqlite3` nativo no Darwin para inspeção dos bancos `~/.gemini/antigravity-ide/conversations/*.db` em modo somente leitura sem locks.
+- **Notificações e Inicialização**: Integração nativa com `UNUserNotificationCenter` e `SMAppService.mainApp`.
 
 ---
 
@@ -30,7 +31,7 @@
 
 - [x] **Fase 1 (Estrutura e Fundação)**: Inicialização do repositório Git, repositório GitHub (`use-token-bar`), estrutura SPM e modelos de dados.
 - [x] **Fase 2 (UI da MenuBar & Painel Interativo)**:
-  - Implementação de `MenuBarExtra` com modos dinâmicos (Ícone + Tokens, Apenas Ícone, Ícone + Agentes).
+  - Implementação de `MenuBarExtra` com modos dinâmicos (Modelo + Tokens, Ícone + Tokens, Apenas Ícone, Ícone + Agentes).
   - Popover com cards de métricas (Tokens, Custo Estimado, Velocidade t/s, Entrada/Saída/Cache).
   - Gráfico em tempo real de consumo recente com `Charts`.
   - Painel de configurações com ajuste de custo e limite de alerta de tokens na sessão.
@@ -41,6 +42,9 @@
   - `ProcessMonitor`: Varredura de processos em segundo plano no macOS.
 - [x] **Fase 4 (Empacotamento e Distribuição)**:
   - Script `scripts/build_app.sh` que gera o bundle `dist/Use Token Bar.app` com `Info.plist` e `LSUIElement = true`.
-- [ ] **Fase 5 (Próximos Passos)**:
-  - Suporte a `SMAppService` para ativação direta no login.
-  - Notificações nativas do macOS (UserNotifications) ao atingir o teto de tokens.
+  - Instalador `scripts/install.sh` (`make install`) para instalação em `/Applications/Use Token Bar.app` e CLI `use-token-bar`.
+- [x] **Fase 5 (Recursos do Sistema e Polimento Final)**:
+  - `LaunchAtLoginService`: Registro nativo no macOS via `SMAppService` para inicialização automática no login.
+  - `NotificationService`: Disparo de notificações de alerta do macOS (`UNUserNotificationCenter`) com som quando o teto de tokens é atingido.
+  - `ExportReportService`: Exportação de relatórios da sessão em formato CSV com timestamps, modelo, tokens e custos para `~/Downloads`.
+  - Interface ampliada para 450px com seletor de IA ativa (3.8 Flash, Argon, Opus 5.5).

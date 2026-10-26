@@ -18,8 +18,11 @@ public final class UserPreferences: ObservableObject {
     @AppStorage("costPerMillionTokens") public var costPerMillionTokens: Double = 2.50
     @AppStorage("alertThresholdTokens") public var alertThresholdTokens: Int = 200_000
     @AppStorage("refreshInterval") public var refreshInterval: Double = 3.0
+    @AppStorage("notificationsEnabled") public var notificationsEnabled: Bool = true
+    @AppStorage("launchAtLogin") public var launchAtLogin: Bool = false
 
     @Published public var showingSettings: Bool = false
+    @Published public var exportStatusMessage: String? = nil
 
     public static let availablePresetModels: [String] = [
         "Gemini 3.8 Flash",

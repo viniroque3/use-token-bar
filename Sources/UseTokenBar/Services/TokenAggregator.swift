@@ -37,6 +37,7 @@ public final class TokenAggregator: ObservableObject {
                 mergedAgents.append(AgentModel(
                     name: "\(app.rawValue) Service",
                     provider: app,
+                    modelName: UserPreferences.shared.selectedModel,
                     state: .idle,
                     currentAction: "Processo detectado em execução no macOS",
                     tokensSession: 0,
@@ -76,6 +77,15 @@ public final class TokenAggregator: ObservableObject {
             ]
         )
 
+        // Native Notification Check
+        if UserPreferences.shared.notificationsEnabled {
+            NotificationService.shared.checkAndNotify(
+                totalTokens: self.stats.totalTokens,
+                threshold: UserPreferences.shared.alertThresholdTokens,
+                model: UserPreferences.shared.selectedModel
+            )
+        }
+
         let now = Date()
         if historyPoints.isEmpty {
             self.historyPoints = [
@@ -86,7 +96,6 @@ public final class TokenAggregator: ObservableObject {
                 TokenDataPoint(timestamp: now, tokens: self.stats.totalTokens, provider: .antigravity)
             ]
         } else {
-            // Append or update current point
             if let last = historyPoints.last, now.timeIntervalSince(last.timestamp) > 300 {
                 historyPoints.append(TokenDataPoint(timestamp: now, tokens: self.stats.totalTokens, provider: .antigravity))
                 if historyPoints.count > 12 {

@@ -163,6 +163,20 @@ public struct DashboardView: View {
             }
         }
 
+        // Export Feedback message
+        if let msg = preferences.exportStatusMessage {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Text(msg)
+                    .font(.system(size: 10, weight: .medium))
+                Spacer()
+            }
+            .padding(6)
+            .background(Color.green.opacity(0.15))
+            .cornerRadius(6)
+        }
+
         // Warning banner if threshold exceeded
         if aggregator.stats.totalTokens > preferences.alertThresholdTokens {
             HStack(spacing: 8) {
@@ -248,12 +262,27 @@ public struct DashboardView: View {
 
         Divider()
 
-        // Footer
+        // Footer with Export CSV & Reset
         HStack {
-            Text("Antigravity • VS Code • Cursor • Codex • Ollama")
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
+            Button(action: {
+                if let url = ExportReportService.shared.exportCSV(stats: aggregator.stats, agents: aggregator.activeAgents, model: preferences.selectedModel) {
+                    preferences.exportStatusMessage = "CSV exportado: \(url.lastPathComponent)"
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                        preferences.exportStatusMessage = nil
+                    }
+                }
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 10))
+                    Text("Exportar CSV")
+                        .font(.system(size: 10, weight: .medium))
+                }
+            }
+            .buttonStyle(.borderless)
+
             Spacer()
+
             Button("Zerar Sessão") {
                 aggregator.stats = TokenStats()
                 aggregator.refreshMetrics()
@@ -266,7 +295,7 @@ public struct DashboardView: View {
     @ViewBuilder
     private var settingsView: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Configurações do Monitor")
+            Text("Configurações Avançadas")
                 .font(.system(size: 14, weight: .bold))
 
             // Model Selection in Settings
@@ -289,6 +318,7 @@ public struct DashboardView: View {
                 .pickerStyle(.menu)
             }
 
+            // Menu Bar Display Mode
             VStack(alignment: .leading, spacing: 6) {
                 Text("Formato do Ícone na Barra de Menus")
                     .font(.system(size: 11, weight: .semibold))
@@ -305,6 +335,31 @@ public struct DashboardView: View {
                 .pickerStyle(.segmented)
             }
 
+            // Toggles: Launch at Login & Notifications
+            VStack(spacing: 8) {
+                Toggle(isOn: Binding(
+                    get: { preferences.notificationsEnabled },
+                    set: { preferences.notificationsEnabled = $0 }
+                )) {
+                    Text("Notificações Nativas do macOS (Alerta de Limite)")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .toggleStyle(.checkbox)
+
+                Toggle(isOn: Binding(
+                    get: { LaunchAtLoginService.shared.isEnabled },
+                    set: { _ = LaunchAtLoginService.shared.setEnabled($0) }
+                )) {
+                    Text("Iniciar Automaticamente ao Ligar o Mac (Launch at Login)")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .toggleStyle(.checkbox)
+            }
+            .padding(8)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            .cornerRadius(8)
+
+            // Pricing Slider
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("Custo Médio por 1M de Tokens:")
@@ -320,6 +375,7 @@ public struct DashboardView: View {
                 ), in: 0.5...15.0, step: 0.25)
             }
 
+            // Threshold Slider
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("Alerta de Limite na Sessão:")
@@ -343,6 +399,8 @@ public struct DashboardView: View {
                     preferences.selectedModel = "Gemini 3.8 Flash"
                     preferences.costPerMillionTokens = 2.50
                     preferences.alertThresholdTokens = 200_000
+                    preferences.notificationsEnabled = true
+                    _ = LaunchAtLoginService.shared.setEnabled(false)
                     aggregator.refreshMetrics()
                 }
                 .buttonStyle(.borderless)
