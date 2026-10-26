@@ -12,6 +12,7 @@ public final class TokenAggregator: ObservableObject {
     @Published public var hoveredPoint: TokenDataPoint? = nil
     @Published public var activeIDE: String = "Antigravity IDE"
     @Published public var conversationTopic: String = "Macos AI Token Monitor"
+    @Published public var dailyRecords: [DailyUsageRecord] = []
 
     private var timer: Timer?
 
@@ -23,6 +24,10 @@ public final class TokenAggregator: ObservableObject {
 
     private func seedInitialHistory() {
         self.historyPoints = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: 282_200)
+        self.dailyRecords = AntigravityWatcher.shared.fetchFirst30DailyUsageRecords(
+            costPerMillion: UserPreferences.shared.costPerMillionTokens,
+            model: UserPreferences.shared.selectedModel
+        )
     }
 
     public func startPeriodicSync() {
@@ -71,6 +76,12 @@ public final class TokenAggregator: ObservableObject {
         let estimatedCost = Double(totalIn + totalOut) / 1_000_000.0 * ratePerM
 
         self.conversationTopic = AntigravityWatcher.shared.fetchCurrentConversationTopic()
+        if self.dailyRecords.isEmpty {
+            self.dailyRecords = AntigravityWatcher.shared.fetchFirst30DailyUsageRecords(
+                costPerMillion: UserPreferences.shared.costPerMillionTokens,
+                model: UserPreferences.shared.selectedModel
+            )
+        }
         self.activeAgents = mergedAgents
         self.isGenerating = mergedAgents.contains { $0.state == .generating || $0.state == .executingTool }
 

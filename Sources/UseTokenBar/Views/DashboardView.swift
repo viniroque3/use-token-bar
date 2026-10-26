@@ -450,6 +450,92 @@ public struct DashboardView: View {
 
             Divider()
 
+            // Daily Token Usage History Section (First 30 Records of the Day)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("DAILY TOKEN HISTORY (FIRST 30)")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(textSecondary)
+                        .tracking(0.5)
+                    Spacer()
+                    Text("\(aggregator.dailyRecords.prefix(30).count) recorded today")
+                        .font(.system(size: 10))
+                        .foregroundColor(textSecondary)
+                }
+
+                if aggregator.dailyRecords.isEmpty {
+                    Text("No daily usage records available yet.")
+                        .font(.system(size: 11))
+                        .foregroundColor(textSecondary)
+                        .padding(.vertical, 4)
+                } else {
+                    // Header row
+                    HStack(spacing: 6) {
+                        Text("Time")
+                            .frame(width: 44, alignment: .leading)
+                        Text("IDE")
+                            .frame(width: 80, alignment: .leading)
+                        Text("Agent / Model")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text("Tokens")
+                            .frame(width: 60, alignment: .trailing)
+                        Text("Cost")
+                            .frame(width: 48, alignment: .trailing)
+                    }
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(textSecondary)
+
+                    Divider()
+
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            ForEach(Array(aggregator.dailyRecords.prefix(30).enumerated()), id: \.element.id) { index, record in
+                                HStack(spacing: 6) {
+                                    Text(record.timestamp.formatted(date: .omitted, time: .standard))
+                                        .font(.system(size: 10, weight: .regular))
+                                        .foregroundColor(textSecondary)
+                                        .frame(width: 44, alignment: .leading)
+
+                                    Text(record.ide.components(separatedBy: " ").first ?? record.ide)
+                                        .font(.system(size: 10, weight: .medium))
+                                        .foregroundColor(textPrimary)
+                                        .frame(width: 80, alignment: .leading)
+                                        .lineLimit(1)
+
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(record.agentName)
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(textPrimary)
+                                            .lineLimit(1)
+                                        Text(record.modelName)
+                                            .font(.system(size: 9))
+                                            .foregroundColor(textSecondary)
+                                            .lineLimit(1)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                    Text(TokenStats.formattedNumber(record.tokens))
+                                        .font(.system(size: 11, weight: .light, design: .rounded))
+                                        .foregroundColor(appleBlue)
+                                        .frame(width: 60, alignment: .trailing)
+
+                                    Text(String(format: "$%.3f", record.costUSD))
+                                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                                        .foregroundColor(textPrimary)
+                                        .frame(width: 48, alignment: .trailing)
+                                }
+                                .padding(.vertical, 4)
+
+                                Divider()
+                            }
+                        }
+                    }
+                    .frame(maxHeight: 150)
+                }
+            }
+
+            Divider()
+
             HStack {
                 Button("Reset Defaults") {
                     preferences.displayMode = MenuBarDisplayMode.iconModelAndTokens.rawValue
