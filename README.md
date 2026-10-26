@@ -29,6 +29,34 @@
 
 ---
 
+## ⚡ Instalação Rápida (Linha de Comando)
+
+Você pode compilar e instalar o app diretamente em `/Applications` e configurar o utilitário CLI:
+
+```bash
+cd ~/Downloads/"Use Token Bar"
+./scripts/install.sh
+# ou simplesmente:
+make install
+```
+
+### 💻 Como Usar o Comando CLI
+
+Após a instalação, o utilitário `use-token-bar` fica disponível no seu Terminal:
+
+```bash
+# Iniciar o aplicativo na MenuBar:
+use-token-bar
+
+# Verificar status de execução:
+use-token-bar status
+
+# Encerrar o aplicativo:
+use-token-bar stop
+```
+
+---
+
 ## 🛠️ Tecnologias & Assets
 
 - **Linguagem**: Swift 5.9+ / Swift 6 (Nativa para macOS).
@@ -37,24 +65,6 @@
   - Apple SF Symbols com suporte a renderização hierárquica e cores variáveis.
   - Diretrizes do macOS Human Interface Guidelines.
   - Configuração `LSUIElement = true` no `Info.plist` (app de status bar sem ícone no Dock).
-
----
-
-## 📦 Como Compilar e Executar
-
-### 1. Empacotar como `.app` (Recomendado)
-```bash
-cd ~/Downloads/"Use Token Bar"
-./scripts/build_app.sh
-
-# Executar o app gerado:
-open "dist/Use Token Bar.app"
-```
-
-### 2. Executar via Linha de Comando (Modo Dev)
-```bash
-swift run
-```
 
 ---
 
