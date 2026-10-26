@@ -4,7 +4,7 @@ set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$DIR"
 
-echo "🚀 Iniciando compilação do Use Token Bar..."
+echo "🚀 Building Use Token Bar release binary..."
 ./scripts/build_app.sh
 
 APP_NAME="Use Token Bar.app"
@@ -13,7 +13,7 @@ TARGET_APP="/Applications/${APP_NAME}"
 CLI_DIR="$HOME/.local/bin"
 CLI_TARGET="${CLI_DIR}/use-token-bar"
 
-echo "📂 Instalando aplicativo em /Applications..."
+echo "📂 Installing application into /Applications..."
 rm -rf "$TARGET_APP"
 cp -R "$SOURCE_APP" "$TARGET_APP"
 
@@ -24,29 +24,29 @@ APP_PATH="/Applications/Use Token Bar.app"
 
 case "$1" in
   start|"")
-    echo "✨ Iniciando Use Token Bar na MenuBar..."
+    echo "✨ Launching Use Token Bar..."
     open "$APP_PATH"
     ;;
   stop|quit)
-    echo "🛑 Encerrando Use Token Bar..."
-    pkill -f "UseTokenBar" || echo "App não estava em execução."
+    echo "🛑 Quitting Use Token Bar..."
+    pkill -f "UseTokenBar" || echo "App is not running."
     ;;
   status)
     if pgrep -f "UseTokenBar" > /dev/null; then
-      echo "🟢 Use Token Bar está em execução na MenuBar."
+      echo "🟢 Use Token Bar is running in the Menu Bar."
     else
-      echo "⚪ Use Token Bar está fechado."
+      echo "⚪ Use Token Bar is closed."
     fi
     ;;
   help|--help|-h)
-    echo "Comandos do Use Token Bar CLI:"
-    echo "  use-token-bar         - Inicia o aplicativo na MenuBar"
-    echo "  use-token-bar stop    - Encerra o aplicativo"
-    echo "  use-token-bar status  - Verifica o status de execução"
+    echo "Use Token Bar CLI Commands:"
+    echo "  use-token-bar         - Launch the application in the Menu Bar"
+    echo "  use-token-bar stop    - Terminate the application"
+    echo "  use-token-bar status  - Check running process status"
     ;;
   *)
-    echo "Opção desconhecida: $1"
-    echo "Use 'use-token-bar --help' para mais informações."
+    echo "Unknown option: $1"
+    echo "Run 'use-token-bar --help' for available commands."
     exit 1
     ;;
 esac
@@ -54,7 +54,7 @@ LAUNCHER
 chmod +x "$CLI_TARGET"
 
 echo ""
-echo "🎉 Instalação concluída com sucesso!"
-echo "📍 Aplicativo instalado em: ${TARGET_APP}"
-echo "⚡ Comando CLI instalado em: ${CLI_TARGET}"
-echo "💡 Para iniciar, execute: use-token-bar"
+echo "🎉 Installation completed successfully!"
+echo "📍 Application installed to: ${TARGET_APP}"
+echo "⚡ CLI launcher available at: ${CLI_TARGET}"
+echo "💡 To start immediately, run: use-token-bar"

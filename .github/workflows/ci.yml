@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build & Package (macOS)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build release binary
+        run: swift build -c release
+
+      - name: Package application
+        run: ./scripts/build_app.sh
+
+      - name: Verify application bundle
+        run: |
+          test -d "dist/Use Token Bar.app"
+          test -f "dist/Use Token Bar.app/Contents/MacOS/UseTokenBar"
+          test -f "dist/Use Token Bar.app/Contents/Info.plist"
+          test -f "dist/Use Token Bar.app/Contents/Resources/AppIcon.icns"
+          echo "Application bundle verified successfully."

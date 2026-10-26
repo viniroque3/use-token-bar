@@ -34,7 +34,7 @@ cat << 'PLIST' > "${CONTENTS_DIR}/Info.plist"
     <key>CFBundleExecutable</key>
     <string>UseTokenBar</string>
     <key>CFBundleIdentifier</key>
-    <string>com.viniroque.usetokenbar</string>
+    <string>app.usetokenbar.macos</string>
     <key>CFBundleName</key>
     <string>Use Token Bar</string>
     <key>CFBundleDisplayName</key>
@@ -55,6 +55,8 @@ cat << 'PLIST' > "${CONTENTS_DIR}/Info.plist"
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 Use Token Bar. All rights reserved.</string>
 </dict>
 </plist>
 PLIST
