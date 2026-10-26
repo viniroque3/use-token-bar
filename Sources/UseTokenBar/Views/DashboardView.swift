@@ -12,10 +12,26 @@ public struct DashboardView: View {
         self.aggregator = aggregator
     }
 
+    private var appIconImage: NSImage? {
+        if let path = Bundle.main.path(forResource: "AppIcon", ofType: "png") {
+            return NSImage(contentsOfFile: path)
+        }
+        return nil
+    }
+
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Header (No icons, clean typography & text actions)
-            HStack(alignment: .center) {
+            // Header with Official App Icon
+            HStack(alignment: .center, spacing: 10) {
+                if let img = appIconImage {
+                    Image(nsImage: img)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 32, height: 32)
+                        .cornerRadius(7)
+                        .shadow(color: Color.black.opacity(0.08), radius: 2, x: 0, y: 1)
+                }
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use Token Bar")
                         .font(.system(size: 16, weight: .bold))
@@ -73,7 +89,7 @@ public struct DashboardView: View {
 
     @ViewBuilder
     private var mainDashboardView: some View {
-        // Active Model Section (No card, flat typographic row)
+        // Active Model Section (Flat typographic row with clean status)
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -143,7 +159,7 @@ public struct DashboardView: View {
 
         Divider()
 
-        // Metrics Columns (No boxes, pure typographic columns separated by thin vertical dividers)
+        // Metrics Columns
         HStack(alignment: .top, spacing: 0) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("TOTAL TOKENS")
@@ -197,7 +213,7 @@ public struct DashboardView: View {
 
         Divider()
 
-        // Token Breakdown Row (No cards, flat typographic split)
+        // Token Breakdown Row
         HStack {
             HStack(spacing: 5) {
                 Circle().fill(appleBlue).frame(width: 5, height: 5)
@@ -233,7 +249,7 @@ public struct DashboardView: View {
 
         Divider()
 
-        // Chart Section (Flat on white background)
+        // Chart Section
         StatsChartView(history: aggregator.historyPoints)
 
         Divider()

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🔨 Compilando release binary com Swift..."
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$DIR"
+
+echo "🔨 Compiling release binary with Swift..."
 swift build -c release
 
 APP_NAME="Use Token Bar"
@@ -10,12 +13,18 @@ CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 
-echo "📦 Empacotando ${APP_DIR}..."
+echo "📦 Packaging ${APP_DIR}..."
 rm -rf "${APP_DIR}"
 mkdir -p "${MACOS_DIR}" "${RESOURCES_DIR}"
 
 cp ".build/release/UseTokenBar" "${MACOS_DIR}/UseTokenBar"
 chmod +x "${MACOS_DIR}/UseTokenBar"
+
+# Copy App Icon resources
+if [ -f "assets/AppIcon.icns" ]; then
+    cp "assets/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
+    cp "assets/AppIcon-1024.png" "${RESOURCES_DIR}/AppIcon.png"
+fi
 
 cat << 'PLIST' > "${CONTENTS_DIR}/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -36,6 +45,10 @@ cat << 'PLIST' > "${CONTENTS_DIR}/Info.plist"
     <string>1.0.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleIconName</key>
+    <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>
@@ -46,4 +59,4 @@ cat << 'PLIST' > "${CONTENTS_DIR}/Info.plist"
 </plist>
 PLIST
 
-echo "✅ Aplicativo empacotado com sucesso em: ${APP_DIR}"
+echo "✅ App packaged successfully with AppIcon: ${APP_DIR}"

@@ -19,11 +19,26 @@ public struct MenuBarIconView: View {
         return full
     }
 
+    private var appIconImage: NSImage? {
+        if let path = Bundle.main.path(forResource: "AppIcon", ofType: "png") {
+            return NSImage(contentsOfFile: path)
+        }
+        return nil
+    }
+
     public var body: some View {
         HStack(spacing: 5) {
-            Circle()
-                .fill(aggregator.isGenerating ? Color.green : (aggregator.activeAgents.isEmpty ? Color.gray.opacity(0.4) : Color.orange))
-                .frame(width: 6, height: 6)
+            if let img = appIconImage {
+                Image(nsImage: img)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 14, height: 14)
+                    .cornerRadius(3)
+            } else {
+                Circle()
+                    .fill(aggregator.isGenerating ? Color.green : (aggregator.activeAgents.isEmpty ? Color.gray.opacity(0.4) : Color.orange))
+                    .frame(width: 6, height: 6)
+            }
 
             if preferences.displayMode == MenuBarDisplayMode.iconModelAndTokens.rawValue {
                 Text("\(modelShortName) • \(TokenStats.formattedNumber(aggregator.stats.totalTokens))")
