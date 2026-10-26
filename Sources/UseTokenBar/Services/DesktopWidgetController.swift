@@ -34,15 +34,15 @@ public final class DesktopWidgetController {
             p.isFloatingPanel = true
             p.level = .floating
             p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            p.isMovable = true
             p.isMovableByWindowBackground = true
             p.backgroundColor = .clear
             p.hasShadow = true
 
-            // Center or place in bottom-right corner of screen by default
             if let screen = NSScreen.main {
                 let screenRect = screen.visibleFrame
                 let originX = screenRect.maxX - width - 40
-                let originY = screenRect.minY + 40
+                let originY = screenRect.minY + 60
                 p.setFrameOrigin(NSPoint(x: originX, y: originY))
             }
 
@@ -51,11 +51,9 @@ public final class DesktopWidgetController {
 
         guard let p = self.panel else { return }
 
-        // Update content view
         let hostingView = NSHostingView(rootView: DesktopWidgetView(size: size))
         p.contentView = hostingView
 
-        // Animate frame resize smoothly
         var frame = p.frame
         frame.size = NSSize(width: width, height: height)
         p.setFrame(frame, display: true, animate: true)

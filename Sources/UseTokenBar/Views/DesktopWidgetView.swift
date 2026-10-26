@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 public enum DesktopWidgetSize: String, CaseIterable, Identifiable {
     case off = "Off"
@@ -6,6 +7,23 @@ public enum DesktopWidgetSize: String, CaseIterable, Identifiable {
     case large = "Large"
 
     public var id: String { rawValue }
+}
+
+// Native Cocoa window drag helper for effortless dragging anywhere on the widget
+struct WindowDragView: NSViewRepresentable {
+    func makeNSView(context: Context) -> DragNSView {
+        return DragNSView()
+    }
+
+    func updateNSView(_ nsView: DragNSView, context: Context) {}
+
+    class DragNSView: NSView {
+        override var mouseDownCanMoveWindow: Bool { true }
+
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+    }
 }
 
 public struct DesktopWidgetView: View {
@@ -18,11 +36,16 @@ public struct DesktopWidgetView: View {
     private let textSecondary = Color(red: 0.55, green: 0.55, blue: 0.58)
 
     public var body: some View {
-        Group {
-            if size == .small {
-                smallWidgetView
-            } else {
-                largeWidgetView
+        ZStack {
+            // Full background drag area allowing user to drag the widget from anywhere
+            WindowDragView()
+
+            Group {
+                if size == .small {
+                    smallWidgetView
+                } else {
+                    largeWidgetView
+                }
             }
         }
         .background(Color.white)
@@ -31,13 +54,12 @@ public struct DesktopWidgetView: View {
             RoundedRectangle(cornerRadius: size == .small ? 20 : 24, style: .continuous)
                 .stroke(Color.black.opacity(0.08), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.10), radius: 10, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 5)
     }
 
     // SMALL DESKTOP WIDGET (180x140)
     private var smallWidgetView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Header
             HStack(spacing: 5) {
                 Circle()
                     .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
@@ -53,7 +75,6 @@ public struct DesktopWidgetView: View {
 
             Divider()
 
-            // Main Tokens Count
             VStack(alignment: .leading, spacing: 1) {
                 Text("TOKENS")
                     .font(.system(size: 9, weight: .semibold))
@@ -69,7 +90,6 @@ public struct DesktopWidgetView: View {
 
             Divider()
 
-            // Footer info
             HStack {
                 Text(String(format: "$%.3f", aggregator.stats.estimatedCostUSD))
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
@@ -84,12 +104,12 @@ public struct DesktopWidgetView: View {
         }
         .padding(14)
         .frame(width: 180, height: 140)
+        .allowsHitTesting(false) // Let mouse clicks and drags pass directly to WindowDragView
     }
 
-    // LARGE DESKTOP WIDGET (350x230)
+    // LARGE DESKTOP WIDGET (350x250)
     private var largeWidgetView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Header
             HStack(alignment: .center) {
                 HStack(spacing: 6) {
                     Circle()
@@ -110,7 +130,6 @@ public struct DesktopWidgetView: View {
 
             Divider()
 
-            // Metrics Columns
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("TOTAL TOKENS")
@@ -154,13 +173,11 @@ public struct DesktopWidgetView: View {
 
             Divider()
 
-            // Fine Line Chart
             StatsChartView(history: aggregator.historyPoints)
                 .frame(height: 85)
 
             Divider()
 
-            // Bottom Breakdown
             HStack {
                 HStack(spacing: 4) {
                     Circle().fill(appleBlue).frame(width: 5, height: 5)
