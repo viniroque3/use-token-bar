@@ -21,8 +21,8 @@ public final class DesktopWidgetController {
     }
 
     private func showWidget(size: DesktopWidgetSize) {
-        let width: CGFloat = size == .small ? 180 : 350
-        let height: CGFloat = size == .small ? 140 : 250
+        let width: CGFloat = size == .small ? 200 : 380
+        let height: CGFloat = size == .small ? 145 : 285
 
         if panel == nil {
             let p = NSPanel(

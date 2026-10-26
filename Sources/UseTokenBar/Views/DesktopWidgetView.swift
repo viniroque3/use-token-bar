@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Charts
 
 public enum DesktopWidgetSize: String, CaseIterable, Identifiable {
     case off = "Off"
@@ -23,6 +24,67 @@ struct WindowDragView: NSViewRepresentable {
         override func mouseDown(with event: NSEvent) {
             window?.performDrag(with: event)
         }
+    }
+}
+
+// Dedicated compact chart for Desktop Widget without headers or overlapping labels
+struct WidgetMiniChartView: View {
+    let history: [TokenDataPoint]
+    let isGenerating: Bool
+    private let appleBlue = Color(red: 0.0, green: 0.478, blue: 1.0)
+    private let textSecondary = Color(red: 0.55, green: 0.55, blue: 0.58)
+
+    var body: some View {
+        Chart {
+            ForEach(history) { point in
+                LineMark(
+                    x: .value("Time", point.timestamp),
+                    y: .value("Tokens", point.tokens)
+                )
+                .interpolationMethod(.monotone)
+                .lineStyle(StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
+                .foregroundStyle(appleBlue)
+
+                AreaMark(
+                    x: .value("Time", point.timestamp),
+                    y: .value("Tokens", point.tokens)
+                )
+                .interpolationMethod(.monotone)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [appleBlue.opacity(0.14), appleBlue.opacity(0.005)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
+
+            if let latest = history.last {
+                PointMark(
+                    x: .value("Time", latest.timestamp),
+                    y: .value("Tokens", latest.tokens)
+                )
+                .symbolSize(26)
+                .foregroundStyle(isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .automatic(desiredCount: 4)) {
+                AxisValueLabel(format: .dateTime.hour().minute())
+                    .font(.system(size: 8, weight: .regular))
+                    .foregroundStyle(textSecondary)
+            }
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading, values: .automatic(desiredCount: 2)) { value in
+                if let val = value.as(Int.self) {
+                    AxisValueLabel(TokenStats.formattedNumber(val))
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundStyle(textSecondary)
+                }
+            }
+        }
+        .frame(height: 75)
     }
 }
 
@@ -52,30 +114,39 @@ public struct DesktopWidgetView: View {
         .clipShape(RoundedRectangle(cornerRadius: size == .small ? 20 : 24, style: .continuous))
     }
 
-    // SMALL DESKTOP WIDGET (180x140)
+    // SMALL DESKTOP WIDGET (200x145)
     private var smallWidgetView: some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Header Row 1: Active IDE & Model
             HStack(spacing: 5) {
                 Circle()
-                    .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
+                    .fill(Color(red: 0.48, green: 0.23, blue: 0.93))
                     .frame(width: 6, height: 6)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(aggregator.activeIDE) • \(preferences.selectedModel)")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(textPrimary)
-                        .lineLimit(1)
-                    Text(aggregator.conversationTopic)
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(appleBlue)
-                        .lineLimit(1)
-                }
+                Text(aggregator.activeIDE.components(separatedBy: " ").first ?? aggregator.activeIDE)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(textPrimary)
+
+                Text("•")
+                    .foregroundColor(textSecondary)
+
+                Text(preferences.selectedModel)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(textSecondary)
+                    .lineLimit(1)
 
                 Spacer()
             }
 
+            // Header Row 2: Topic
+            Text(aggregator.conversationTopic)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundColor(appleBlue)
+                .lineLimit(1)
+
             Divider()
 
+            // Tokens
             VStack(alignment: .leading, spacing: 1) {
                 Text("TOKENS")
                     .font(.system(size: 9, weight: .semibold))
@@ -91,61 +162,73 @@ public struct DesktopWidgetView: View {
 
             Divider()
 
+            // Cost & Speed
             HStack {
                 Text(String(format: "$%.3f", aggregator.stats.estimatedCostUSD))
-                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 11, weight: .light, design: .rounded))
                     .foregroundColor(textPrimary)
 
                 Spacer()
 
                 Text(String(format: "%.0f t/s", aggregator.stats.tokensPerSecond))
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .font(.system(size: 11, weight: .light, design: .rounded))
                     .foregroundColor(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : textSecondary)
             }
         }
         .padding(14)
-        .frame(width: 180, height: 140)
-        .allowsHitTesting(false) // Let mouse clicks and drags pass directly to WindowDragView
+        .frame(width: 200, height: 145)
+        .allowsHitTesting(false)
     }
 
-    // LARGE DESKTOP WIDGET (350x250)
+    // LARGE DESKTOP WIDGET (380x285)
     private var largeWidgetView: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
+            // Header Row 1: Active IDE & Model + Status
             HStack(alignment: .center) {
                 HStack(spacing: 6) {
                     Circle()
-                        .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
+                        .fill(Color(red: 0.48, green: 0.23, blue: 0.93))
                         .frame(width: 6, height: 6)
 
                     Text(aggregator.activeIDE)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(textPrimary)
 
                     Text("•")
                         .foregroundColor(textSecondary)
 
                     Text(preferences.selectedModel)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(textPrimary)
-
-                    Text("•")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(textSecondary)
-
-                    Text(aggregator.conversationTopic)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(appleBlue)
-                        .lineLimit(1)
                 }
 
                 Spacer()
 
-                Text(aggregator.isGenerating ? "Processing" : "Ready")
+                HStack(spacing: 5) {
+                    Circle()
+                        .fill(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : Color(red: 1.0, green: 0.58, blue: 0.0))
+                        .frame(width: 6, height: 6)
+                    Text(aggregator.isGenerating ? "Processing" : "Ready")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(aggregator.isGenerating ? Color(red: 0.15, green: 0.65, blue: 0.30) : textSecondary)
+                }
+            }
+
+            // Header Row 2: Conversation Topic
+            HStack(spacing: 5) {
+                Text("TOPIC:")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(textSecondary)
+                    .tracking(0.5)
+                Text(aggregator.conversationTopic)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : textSecondary)
+                    .foregroundColor(appleBlue)
+                    .lineLimit(1)
             }
 
             Divider()
 
+            // Metrics Row
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("TOTAL TOKENS")
@@ -158,7 +241,7 @@ public struct DesktopWidgetView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Divider().frame(height: 34)
+                Divider().frame(height: 32)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("COST")
@@ -166,13 +249,13 @@ public struct DesktopWidgetView: View {
                         .foregroundColor(textSecondary)
                         .tracking(0.5)
                     Text(String(format: "$%.3f", aggregator.stats.estimatedCostUSD))
-                        .font(.system(size: 18, weight: .bold, design: .monospaced))
+                        .font(.system(size: 18, weight: .light, design: .rounded))
                         .foregroundColor(textPrimary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 10)
+                .padding(.leading, 12)
 
-                Divider().frame(height: 34)
+                Divider().frame(height: 32)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("SPEED")
@@ -180,20 +263,21 @@ public struct DesktopWidgetView: View {
                         .foregroundColor(textSecondary)
                         .tracking(0.5)
                     Text(String(format: "%.0f t/s", aggregator.stats.tokensPerSecond))
-                        .font(.system(size: 18, weight: .bold, design: .monospaced))
+                        .font(.system(size: 18, weight: .light, design: .rounded))
                         .foregroundColor(textPrimary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 10)
+                .padding(.leading, 12)
             }
 
             Divider()
 
-            StatsChartView(history: aggregator.historyPoints)
-                .frame(height: 85)
+            // Compact Chart without overlapping text
+            WidgetMiniChartView(history: aggregator.historyPoints, isGenerating: aggregator.isGenerating)
 
             Divider()
 
+            // Token Breakdown Row
             HStack {
                 HStack(spacing: 4) {
                     Circle().fill(appleBlue).frame(width: 5, height: 5)
@@ -227,6 +311,6 @@ public struct DesktopWidgetView: View {
             }
         }
         .padding(16)
-        .frame(width: 350, height: 250)
+        .frame(width: 380, height: 285)
     }
 }
