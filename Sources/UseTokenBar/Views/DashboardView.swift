@@ -22,7 +22,7 @@ public struct DashboardView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Header (Clean Typography & Minimal Text Actions)
+            // Header
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use Token Bar")
@@ -116,6 +116,35 @@ public struct DashboardView: View {
                 }
             }
         }
+
+        // Desktop Widget Selector Bar
+        HStack {
+            Text("DESKTOP WIDGET")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(textSecondary)
+                .tracking(0.5)
+
+            Spacer()
+
+            HStack(spacing: 6) {
+                ForEach(DesktopWidgetSize.allCases) { size in
+                    let isSelected = preferences.desktopWidgetSize == size.rawValue
+                    Button(action: {
+                        preferences.updateDesktopWidgetSize(size)
+                    }) {
+                        Text(size.rawValue)
+                            .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(isSelected ? appleBlue.opacity(0.12) : Color.black.opacity(0.03))
+                            .foregroundColor(isSelected ? appleBlue : textSecondary)
+                            .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.vertical, 2)
 
         // Export Feedback message
         if let msg = preferences.exportStatusMessage {
@@ -306,6 +335,26 @@ public struct DashboardView: View {
                 .foregroundColor(textPrimary)
 
             VStack(alignment: .leading, spacing: 6) {
+                Text("Desktop Widget Size")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(textSecondary)
+
+                Picker("", selection: Binding(
+                    get: { preferences.desktopWidgetSize },
+                    set: {
+                        if let size = DesktopWidgetSize(rawValue: $0) {
+                            preferences.updateDesktopWidgetSize(size)
+                        }
+                    }
+                )) {
+                    ForEach(DesktopWidgetSize.allCases) { size in
+                        Text(size.rawValue).tag(size.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Default Active Model")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(textSecondary)
@@ -403,6 +452,7 @@ public struct DashboardView: View {
                     preferences.costPerMillionTokens = 2.50
                     preferences.alertThresholdTokens = 200_000
                     preferences.notificationsEnabled = true
+                    preferences.updateDesktopWidgetSize(.off)
                     _ = LaunchAtLoginService.shared.setEnabled(false)
                     aggregator.refreshMetrics()
                 }

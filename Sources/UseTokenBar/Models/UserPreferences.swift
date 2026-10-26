@@ -20,6 +20,7 @@ public final class UserPreferences: ObservableObject {
     @AppStorage("refreshInterval") public var refreshInterval: Double = 3.0
     @AppStorage("notificationsEnabled") public var notificationsEnabled: Bool = true
     @AppStorage("launchAtLogin") public var launchAtLogin: Bool = false
+    @AppStorage("desktopWidgetSize") public var desktopWidgetSize: String = DesktopWidgetSize.off.rawValue
 
     @Published public var showingSettings: Bool = false
     @Published public var exportStatusMessage: String? = nil
@@ -33,5 +34,14 @@ public final class UserPreferences: ObservableObject {
         "Ollama Local"
     ]
 
-    private init() {}
+    private init() {
+        if let size = DesktopWidgetSize(rawValue: desktopWidgetSize), size != .off {
+            DesktopWidgetController.shared.setWidgetSize(size)
+        }
+    }
+
+    public func updateDesktopWidgetSize(_ size: DesktopWidgetSize) {
+        self.desktopWidgetSize = size.rawValue
+        DesktopWidgetController.shared.setWidgetSize(size)
+    }
 }
