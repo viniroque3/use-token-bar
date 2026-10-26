@@ -1,15 +1,22 @@
 <div align="center">
   <img src="assets/AppIcon-1024.png" width="96" height="96" alt="Use Token Bar Icon" style="border-radius: 20px;" />
   <h1>Use Token Bar</h1>
-  <p><strong>Lightweight, real-time native macOS status bar monitor for AI coding tools and token throughput.</strong></p>
+  <p><strong>Monitor nativo, leve e em tempo real para a barra de menus do macOS, rastreando ferramentas de IA e consumo de tokens.</strong></p>
 
   <p>
+    <a href="https://github.com/viniroque3/use-token-bar/releases/tag/v0.1"><img src="https://img.shields.io/badge/Release-v0.1-007AFF?style=flat-square&logo=apple&logoColor=white" alt="Release v0.1" /></a>
     <img src="https://img.shields.io/badge/Platform-macOS%2014.0%2B-000000?style=flat-square&logo=apple&logoColor=white" alt="macOS 14+" />
     <img src="https://img.shields.io/badge/Architecture-Apple%20Silicon%20%2F%20Intel-007AFF?style=flat-square" alt="Universal" />
     <img src="https://img.shields.io/badge/Swift-5.9%20%2F%206.0-F05138?style=flat-square&logo=swift&logoColor=white" alt="Swift 5.9+" />
     <img src="https://img.shields.io/badge/Memory-%3C%2022%20MB%20RAM-34C759?style=flat-square" alt="Low Memory" />
     <img src="https://img.shields.io/badge/Privacy-100%25%20Local-5856D6?style=flat-square" alt="Local-First" />
     <img src="https://img.shields.io/badge/License-MIT-gray?style=flat-square" alt="License" />
+  </p>
+
+  <p>
+    <a href="https://github.com/viniroque3/use-token-bar/releases/download/v0.1/UseTokenBar-v0.1.dmg">
+      <img src="https://img.shields.io/badge/Download-UseTokenBar--v0.1.dmg-007AFF?style=for-the-badge&logo=apple&logoColor=white" alt="Baixar .DMG" />
+    </a>
   </p>
 </div>
 
@@ -19,44 +26,68 @@
   <img src="assets/screenshots/dashboard.png" width="380" alt="Use Token Bar Dashboard" />
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="assets/screenshots/settings.png" width="380" alt="Use Token Bar Settings & History" />
-  <p><em>Use Token Bar in action: Real-Time Token Monitor, Daily Timeline, and Configurable Settings</em></p>
+  <p><em>Use Token Bar em ação: Monitor de Tokens em Tempo Real, Histórico Diário, Widgets e Configurações</em></p>
 </div>
 
 ---
 
-## Key Highlights
+## ⚡ Recursos Principais
 
-- **Native macOS Menu Bar Integration**: Runs as a lightweight `LSUIElement` daemon without cluttering your macOS Dock.
-- **Real-Time Token Throughput**: Live tracking of input tokens, output tokens, and cache hits with fine-line Apple Blue telemetry charts.
-- **Dynamic Active Model Identification**: Automatically detects and displays the active model in use (e.g., `Gemini 3.8 Flash`, `Argon Reasoning`, `Claude Opus 5.5`).
-- **Deep Local Inspection**:
-  - **Antigravity IDE**: Direct read-only `SQLite3` engine inspecting active step states (`status = 2`) and payload volumes in `~/.gemini/antigravity-ide/conversations/`.
-  - **VS Code & Extensions**: Monitors Cline, Roo Code, and GitHub Copilot session storage.
-  - **Local LLMs**: Discovers active Ollama endpoints (`http://localhost:11434/api/tags`).
-  - **CLI Agents & Cursor**: Background process detection with Darwin process tables.
-- **Configurable Cost & Thresholds**: Set custom pricing per million tokens and trigger native macOS system notifications when reaching session limits.
-- **Desktop Floating Widgets**: Movable Small and Large desktop widgets displaying live tokens, speed, and real-time charts.
-- **Daily Token History & Export**: Automatically logs the first 30 interactions of the day with instant export to **Excel (.xls)** and **CSV**.
-- **Launch at Login**: Native startup management powered by `SMAppService`.
-
----
-
-## Supported Environments
-
-| Environment / Tool | Inspection Method | Metrics Tracked |
-| :--- | :--- | :--- |
-| **Antigravity IDE** | Native Darwin `libsqlite3` (`conversations/*.db`) | Step counts, active agent status, session token volume |
-| **VS Code (Copilot / Cline / Roo)** | Local Extension Storage & Task JSONs | In/out token accounting, cache reads/writes, cost estimate |
-| **Ollama / Local LLMs** | Asynchronous Local REST Polling (`11434/api/tags`) | Local model catalog, runtime availability |
-| **Cursor & Codex CLI** | POSIX Process Table & Workspace Storage | Process lifecycle, active agent executions |
+- **Integração Nativa à Barra de Menus (Menu Bar)**: Opera silenciosamente como um daemon `LSUIElement` ultra-leve sem ocupar espaço no Dock.
+- **Detecção Dinâmica do Modelo em Tempo Real**: Identifica automaticamente o modelo que você está utilizando no momento (ex: `Gemini 3.8 Flash`, `Claude 3.5 Sonnet`, `GPT-4o`, `Llama 3.3`) sem necessidade de seleção manual.
+- **Detecção Inteligente da IDE Ativa**: Monitora o editor em primeiro plano priorizando agentes ativos (`Antigravity IDE`, `Cursor`, `VS Code`, `Ollama`).
+- **Throughput e Métricas em Tempo Real**: Rastreamento de tokens de entrada (input), saída (output), cache hits, velocidade (`t/s`) e custo acumulado.
+- **Gráfico de Uso Diário Contínuo**: Timeline dinâmica ilustrando o consumo desde o início do uso no dia (`09:14`) até o momento atual ou pausa.
+- **Widgets de Mesa Flutuantes**:
+  - **Pequeno (200x145)**: Métricas essenciais com tipografia fine-line arredondada em Apple Blue.
+  - **Grande (380x285)**: Visão completa com mini-gráfico vetorial sem sobreposição de textos e detalhamento por modelo/agente.
+- **Histórico Diário de Tokens (Primeiros 30 Registros)**: Registra os 30 primeiros consumos do dia separando horário, IDE, agente, modelo, tokens e custo estimado.
+- **Exportação Instantânea para Excel e CSV**:
+  - **Excel (`.xls`)**: Planilha formatada com cabeçalhos e totais.
+  - **CSV (UTF-8 com BOM)**: Compatibilidade nativa com Microsoft Excel, Numbers e Google Sheets.
+- **Persistência Segura com SQLite**: Leitura somente-leitura com `sqlite3_busy_timeout` evitando bloqueios de escrita durante compactions e execuções ativas.
+- **Notificações do Sistema e Início Automático**: Alertas nativos ao ultrapassar teto de tokens e suporte a inicialização no login via `SMAppService`.
 
 ---
 
-## Installation
+## 📥 Instalação e Restrições do macOS (Gatekeeper)
 
-### Method 1: Automated Script & CLI (Recommended)
+### Método 1: Imagem de Disco `.DMG` (Recomendado)
 
-Clone the repository and run the installer:
+1. Baixe o instalador oficial: [**UseTokenBar-v0.1.dmg**](https://github.com/viniroque3/use-token-bar/releases/download/v0.1/UseTokenBar-v0.1.dmg).
+2. Dê um duplo-clique no `.dmg` baixado e arraste o **Use Token Bar** para a pasta **Applications**.
+
+#### ⚠️ Como Liberar a Restrição de Segurança do macOS
+
+Por ser um projeto open-source independente distribuído fora da Mac App Store (sem certificado pago de desenvolvedor Apple), o macOS Gatekeeper poderá exibir o aviso:
+> *"O app não pode ser aberto porque o desenvolvedor não pôde ser verificado"* ou *"O app está danificado e não pode ser aberto"*.
+
+Para liberar o aplicativo, utilize **uma** das opções abaixo:
+
+##### Opção 1: Terminal (Mais Rápida - 1 Clique)
+Abra o **Terminal** do seu Mac e cole o comando abaixo:
+```bash
+xattr -cr "/Applications/Use Token Bar.app"
+```
+*Este comando remove o atributo de quarentena imposto pelo download da internet.*
+
+##### Opção 2: Pelo Menu de Contexto
+1. Abra o **Finder** e acesse a pasta **Aplicativos** (`/Applications`).
+2. Clique com o **botão direito** (ou `Control + clique`) no **Use Token Bar**.
+3. Selecione **Abrir**.
+4. Na janela de confirmação que surgir, clique no botão **Abrir**.
+
+##### Opção 3: Ajustes do Sistema
+1. Abra os **Ajustes do Sistema** (System Settings).
+2. Vá em **Privacidade e Segurança** (Privacy & Security).
+3. Role até a seção **Segurança** e você verá: *"Use Token Bar foi impedido de abrir..."*.
+4. Clique em **Abrir Mesmo Assim** e confirme sua senha ou Touch ID.
+
+---
+
+### Método 2: Instalação Automática via Terminal (Compilação Local)
+
+Se preferir compilar do código-fonte:
 
 ```bash
 git clone https://github.com/viniroque3/use-token-bar.git
@@ -64,73 +95,46 @@ cd use-token-bar
 make install
 ```
 
-This compiles an optimized release binary, packages `Use Token Bar.app` into `/Applications`, and installs the `use-token-bar` command in `~/.local/bin`.
-
-### Method 2: Manual Swift Build
-
-```bash
-swift build -c release
-./scripts/build_app.sh
-open "dist/Use Token Bar.app"
-```
+O instalador compilará a versão de release, instalará o `.app` em `/Applications` e criará o comando `use-token-bar` no seu Terminal.
 
 ---
 
-## Command Line Interface (CLI)
+## 🛠 Ambientes Monitorados
 
-Control Use Token Bar directly from your terminal:
+| Ambiente / Ferramenta | Método de Inspeção | Métricas Rastreadas |
+| :--- | :--- | :--- |
+| **Antigravity IDE** | SQLite3 Darwin Nativo (`conversations/*.db`) | Tokens por payload/passos, tópicos de conversa, compactions |
+| **VS Code (Copilot / Cline / Roo)** | Storage local de extensões & Tarefas JSON | Tokens de entrada/saída, cache, custo estimado |
+| **Cursor & Codex CLI** | Tabela de processos POSIX e workspaces | Detecção de ciclo de vida e atividade de agentes |
+| **Ollama / LLMs Locais** | Polling assíncrono REST (`localhost:11434`) | Modelos carregados e telemetria local |
+
+---
+
+## 💻 Comandos CLI
+
+Você também pode gerenciar o Use Token Bar pelo terminal:
 
 ```bash
-# Launch the application in the Menu Bar
+# Iniciar o aplicativo na Menu Bar
 use-token-bar
 
-# Check running daemon status
+# Verificar status do processo
 use-token-bar status
 
-# Gracefully terminate the application
+# Encerrar graciosamente
 use-token-bar stop
 ```
 
 ---
 
-## Technical Architecture
+## 🔒 Garantia de Segurança e Privacidade
 
-```
-Use Token Bar/
-├── Package.swift                    # Swift Package Manager configuration
-├── Makefile                         # Professional build, install & package automation
-├── assets/                          # Official macOS Retina icons and master PNG
-│   ├── AppIcon-1024.png             # Master 1024x1024 application asset
-│   └── AppIcon.icns                 # Multi-resolution macOS bundle icon
-├── scripts/
-│   ├── build_app.sh                 # Release packager generating .app bundle
-│   └── install.sh                   # Self-contained installer and CLI link manager
-├── Sources/
-│   └── UseTokenBar/
-│       ├── App/                     # Application entry point & MenuBarExtra coordinator
-│       ├── Models/                  # Agent state, token metrics & user preference storage
-│       ├── Services/                # Antigravity SQLite engine, process and watcher services
-│       └── Views/                   # Flat SwiftUI typographic views & fine-line charts
-└── .github/
-    └── workflows/ci.yml             # Automated GitHub Actions macOS compilation check
-```
+- **100% Local**: Nenhum dado, token ou métrica é enviado para a internet.
+- **Somente Leitura**: Acesso a bancos e logs estritamente em modo read-only (`SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX`).
+- **Código Aberto**: Transparência total sob licença MIT.
 
 ---
 
-## Security & Privacy Guarantee
+## 📄 Licença
 
-- **100% Local**: No network telemetry, analytics, or external API calls.
-- **Read-Only**: Accesses local logs and SQLite databases in strictly read-only mode (`SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX`).
-- **Transparent**: Fully open source under the MIT License.
-
----
-
-## Contributing
-
-Contributions are welcome! Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for development setup instructions and guidelines.
-
----
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+Distribuído sob a Licença MIT. Consulte [LICENSE](LICENSE) para obter mais detalhes.
