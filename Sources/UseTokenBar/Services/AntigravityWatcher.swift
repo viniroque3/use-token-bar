@@ -34,7 +34,7 @@ public final class AntigravityWatcher {
                     return d1 > d2
                 }
 
-            // Aggregate tokens from all conversations active today to maintain true cumulative total
+            // Sum up total tokens across all today active conversations
             for dbFile in dbFiles {
                 if let mod = (try? dbFile.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate,
                    Calendar.current.isDateInToday(mod) {
@@ -44,43 +44,77 @@ public final class AntigravityWatcher {
                 }
             }
 
-            if let latestDB = dbFiles.first {
+            // Multi-Detection: Identify all active Antigravity conversations / projects
+            let now = Date()
+            var activeConversations: [(url: URL, modDate: Date, metrics: DBQueryMetrics, id: String)] = []
+
+            for dbFile in dbFiles {
+                let values = try? dbFile.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
+                let modDate = values?.contentModificationDate ?? Date.distantPast
+                let id = dbFile.deletingPathExtension().lastPathComponent
+                let walURL = dbFile.deletingPathExtension().appendingPathExtension("db-wal")
+
+                let walExists = fileManager.fileExists(atPath: walURL.path)
+                let walSize = (try? walURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+                let walMod = (try? walURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                let latestMod = max(modDate, walMod)
+
+                let isToday = Calendar.current.isDateInToday(latestMod)
+                let isRecent = isToday && (now.timeIntervalSince(latestMod) < 7200 || (walExists && walSize > 0))
+
+                if isRecent {
+                    let metrics = queryDatabaseMetrics(dbPath: dbFile.path)
+                    if metrics.totalSteps > 0 {
+                        activeConversations.append((url: dbFile, modDate: latestMod, metrics: metrics, id: id))
+                    }
+                }
+            }
+
+            // Fallback to top conversation if no recent active ones passed criteria
+            if activeConversations.isEmpty, let latestDB = dbFiles.first {
                 let values = try? latestDB.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey])
                 let modDate = values?.contentModificationDate ?? Date()
+                let id = latestDB.deletingPathExtension().lastPathComponent
+                let metrics = queryDatabaseMetrics(dbPath: latestDB.path)
+                activeConversations.append((url: latestDB, modDate: modDate, metrics: metrics, id: id))
+            }
 
-                let dbMetrics = queryDatabaseMetrics(dbPath: latestDB.path)
+            let isMultiProject = activeConversations.count > 1
 
+            for activeConv in activeConversations {
+                let dbMetrics = activeConv.metrics
                 let estimatedTokens = max(dbMetrics.totalPayloadBytes / 4, dbMetrics.totalSteps * 450)
-                // Total tokens are aggregated across all today's active sessions
-
                 let isActivelyRunning = dbMetrics.activeStepsCount > 0
-                let isRecent = Date().timeIntervalSince(modDate) < 600
+                let isRecent = now.timeIntervalSince(activeConv.modDate) < 600
 
                 let executionState: AgentExecutionState
                 let actionText: String
 
+                let projectTitle = fetchProjectNameForConversation(convId: activeConv.id)
+
                 if isActivelyRunning {
                     executionState = .generating
-                    actionText = "Executing step #\(dbMetrics.totalSteps) (processing)"
+                    actionText = "Executing step #\(dbMetrics.totalSteps) - \(projectTitle) (active)"
                 } else if isRecent {
                     executionState = .waitingInput
-                    actionText = "\(dbMetrics.totalSteps) steps completed - awaiting prompt"
+                    actionText = "\(dbMetrics.totalSteps) steps completed - \(projectTitle)"
                 } else {
                     executionState = .idle
-                    actionText = "Session paused (\(dbMetrics.totalSteps) steps recorded)"
+                    actionText = "\(dbMetrics.totalSteps) steps recorded - \(projectTitle)"
                 }
 
-                let currentModel = UserPreferences.shared.selectedModel
+                let modelForProject = detectModelForConversation(convId: activeConv.id)
+                let agentDisplayName = isMultiProject ? "Antigravity (\(projectTitle))" : "Antigravity Agent"
 
                 activeAgents.append(AgentModel(
-                    name: "Antigravity Agent",
+                    name: agentDisplayName,
                     provider: .antigravity,
-                    modelName: currentModel,
+                    modelName: modelForProject,
                     state: executionState,
                     currentAction: actionText,
                     tokensSession: estimatedTokens,
-                    startedAt: modDate.addingTimeInterval(-Double(dbMetrics.totalSteps * 30)),
-                    lastActivityAt: modDate
+                    startedAt: activeConv.modDate.addingTimeInterval(-Double(dbMetrics.totalSteps * 30)),
+                    lastActivityAt: activeConv.modDate
                 ))
             }
         } catch {
@@ -88,6 +122,76 @@ public final class AntigravityWatcher {
         }
 
         return (activeAgents, totalEstimatedTokens)
+    }
+
+    public func fetchProjectNameForConversation(convId: String) -> String {
+        let brainDir = antigravityDir.appendingPathComponent("brain").appendingPathComponent(convId)
+        let transcriptURL = brainDir.appendingPathComponent(".system_generated/logs/transcript.jsonl")
+
+        if let data = try? Data(contentsOf: transcriptURL),
+           let content = String(data: data.prefix(16384), encoding: .utf8) {
+            let lines = content.components(separatedBy: .newlines)
+            for (idx, line) in lines.enumerated() {
+                if idx > 80 { break }
+
+                // Check for repository name mentions (e.g., \"repositorio Use Token Bar\")
+                if let range = line.range(of: "repositório ", options: .caseInsensitive) ?? line.range(of: "repositorio ", options: .caseInsensitive) {
+                    let sub = String(line[range.upperBound...])
+                    let token = sub.components(separatedBy: CharacterSet.newlines.union(CharacterSet(charactersIn: "<>\"\\n\\r"))).first?.trimmingCharacters(in: .whitespaces) ?? ""
+                    if !token.isEmpty && token.count < 30 {
+                        return token
+                    }
+                }
+
+                // Check for workspace / directory path under /Users/viniroque/
+                if line.contains("/Users/") || line.contains("Downloads/") || line.contains("fivegen") {
+                    let parts = line.components(separatedBy: "/")
+                    for (pIdx, part) in parts.enumerated() {
+                        let clean = part.components(separatedBy: CharacterSet(charactersIn: "\",; ")).first ?? ""
+                        if parts.indices.contains(pIdx - 1) && (parts[pIdx - 1] == "Downloads" || parts[pIdx - 1] == "Projects" || parts[pIdx - 1] == "Developer") {
+                            if !clean.isEmpty && clean != "viniroque" && !clean.hasPrefix(".") {
+                                return clean
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check plan or artifact markdown files in brain
+        if let files = try? fileManager.contentsOfDirectory(at: brainDir, includingPropertiesForKeys: nil) {
+            for f in files where f.pathExtension == "md" && !f.lastPathComponent.hasPrefix(".") {
+                let base = f.deletingPathExtension().lastPathComponent
+                if base != "scratch" {
+                    let clean = base.replacingOccurrences(of: "plan_", with: "")
+                        .replacingOccurrences(of: "_", with: " ")
+                        .capitalized
+                    if clean.count > 2 {
+                        return String(clean.prefix(24))
+                    }
+                }
+            }
+        }
+
+        return "Antigravity Project"
+    }
+
+    public func detectModelForConversation(convId: String) -> String {
+        let brainDir = antigravityDir.appendingPathComponent("brain")
+        let transcriptURL = brainDir.appendingPathComponent(convId).appendingPathComponent(".system_generated/logs/transcript.jsonl")
+        if let data = try? Data(contentsOf: transcriptURL, options: .mappedIfSafe),
+           let snippet = String(data: data.prefix(16384), encoding: .utf8) {
+            if snippet.contains("gemini-3.8-flash") || snippet.contains("3.8 Flash") {
+                return "Gemini 3.8 Flash"
+            } else if snippet.contains("gemini-2.5-pro") || snippet.contains("2.5 Pro") {
+                return "Gemini 2.5 Pro"
+            } else if snippet.contains("claude-3-5-sonnet") || snippet.contains("Sonnet") {
+                return "Claude 3.5 Sonnet"
+            } else if snippet.contains("gpt-4o") {
+                return "GPT-4o"
+            }
+        }
+        return UserPreferences.shared.selectedModel
     }
 
     public func fetchFirst30DailyUsageRecords(costPerMillion: Double, model: String) -> [DailyUsageRecord] {
@@ -111,7 +215,10 @@ public final class AntigravityWatcher {
 
             for dbFile in todayFiles {
                 let id = dbFile.deletingPathExtension().lastPathComponent
+                let projectTitle = fetchProjectNameForConversation(convId: id)
                 let transcriptURL = brainDir.appendingPathComponent(id).appendingPathComponent(".system_generated/logs/transcript.jsonl")
+                let modelForRecord = detectModelForConversation(convId: id)
+
                 if let data = try? Data(contentsOf: transcriptURL),
                    let content = String(data: data, encoding: .utf8) {
                     let lines = content.components(separatedBy: .newlines)
@@ -136,9 +243,9 @@ public final class AntigravityWatcher {
 
                         let record = DailyUsageRecord(
                             timestamp: t,
-                            ide: "Antigravity IDE",
-                            agentName: "Antigravity Agent",
-                            modelName: model,
+                            ide: "Antigravity (\(projectTitle))",
+                            agentName: "Agent (\(projectTitle))",
+                            modelName: modelForRecord,
                             tokens: tok,
                             costUSD: cost
                         )
@@ -238,6 +345,11 @@ public final class AntigravityWatcher {
                 return d1 > d2
             }
             if let latestConv = sorted.first {
+                let id = latestConv.lastPathComponent
+                let proj = fetchProjectNameForConversation(convId: id)
+                if proj != "Antigravity Project" {
+                    return proj
+                }
                 if let files = try? fileManager.contentsOfDirectory(at: latestConv, includingPropertiesForKeys: nil) {
                     for f in files where f.lastPathComponent.hasPrefix("plan_") && f.pathExtension == "md" {
                         let name = f.deletingPathExtension().lastPathComponent
@@ -373,21 +485,8 @@ public final class AntigravityWatcher {
                 return d1 > d2
             }
             if let latest = dbs.first {
-                let brainDir = antigravityDir.appendingPathComponent("brain")
-                let convId = latest.deletingPathExtension().lastPathComponent
-                let transcriptURL = brainDir.appendingPathComponent(convId).appendingPathComponent(".system_generated/logs/transcript.jsonl")
-                if let data = try? Data(contentsOf: transcriptURL, options: .mappedIfSafe),
-                   let snippet = String(data: data.prefix(8192), encoding: .utf8) {
-                    if snippet.contains("gemini-3.8-flash") || snippet.contains("3.8 Flash") {
-                        return "Gemini 3.8 Flash"
-                    } else if snippet.contains("gemini-2.5-pro") || snippet.contains("2.5 Pro") {
-                        return "Gemini 2.5 Pro"
-                    } else if snippet.contains("claude-3-5-sonnet") {
-                        return "Claude 3.5 Sonnet"
-                    } else if snippet.contains("gpt-4o") {
-                        return "GPT-4o"
-                    }
-                }
+                let id = latest.deletingPathExtension().lastPathComponent
+                return detectModelForConversation(convId: id)
             }
         }
         return "Gemini 3.8 Flash"

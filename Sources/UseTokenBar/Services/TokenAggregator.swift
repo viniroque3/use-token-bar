@@ -71,8 +71,10 @@ public final class TokenAggregator: ObservableObject {
             }
         }
 
-        // Determine active IDE (prioritizing active AI IDE with generation/activity)
-        if mergedAgents.contains(where: { $0.provider == .antigravity }) || runningApps.contains(.antigravity) {
+        // Determine active IDE (prioritizing multi-project Antigravity, then active generating agent)
+        if antigravityAgents.count > 1 {
+            self.activeIDE = "Antigravity (\(antigravityAgents.count) Projects)"
+        } else if mergedAgents.contains(where: { $0.provider == .antigravity }) || runningApps.contains(.antigravity) {
             self.activeIDE = AIAppProvider.antigravity.rawValue
         } else if let generating = mergedAgents.first(where: { $0.state == .generating || $0.state == .executingTool }) {
             self.activeIDE = generating.provider.rawValue
@@ -89,7 +91,18 @@ public final class TokenAggregator: ObservableObject {
         self.detectedActiveModel = liveModel
         UserPreferences.shared.selectedModel = liveModel
 
-        self.conversationTopic = AntigravityWatcher.shared.fetchCurrentConversationTopic()
+        // Multi-Project Topic: display combined or active project topic
+        if antigravityAgents.count > 1 {
+            if let generating = antigravityAgents.first(where: { $0.state == .generating }) {
+                let name = generating.name.replacingOccurrences(of: "Antigravity (", with: "").replacingOccurrences(of: ")", with: "")
+                self.conversationTopic = name
+            } else {
+                let names = antigravityAgents.map { $0.name.replacingOccurrences(of: "Antigravity (", with: "").replacingOccurrences(of: ")", with: "") }
+                self.conversationTopic = names.joined(separator: " • ")
+            }
+        } else {
+            self.conversationTopic = AntigravityWatcher.shared.fetchCurrentConversationTopic()
+        }
         if self.dailyRecords.isEmpty {
             self.dailyRecords = AntigravityWatcher.shared.fetchFirst30DailyUsageRecords(
                 costPerMillion: UserPreferences.shared.costPerMillionTokens,

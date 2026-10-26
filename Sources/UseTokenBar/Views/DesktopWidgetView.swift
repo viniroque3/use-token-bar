@@ -123,7 +123,7 @@ public struct DesktopWidgetView: View {
                     .fill(Color(red: 0.48, green: 0.23, blue: 0.93))
                     .frame(width: 6, height: 6)
 
-                Text(aggregator.activeIDE.components(separatedBy: " ").first ?? aggregator.activeIDE)
+                Text(aggregator.activeIDE.contains("(") ? aggregator.activeIDE.replacingOccurrences(of: " Projects", with: "P").replacingOccurrences(of: " Project", with: "P") : (aggregator.activeIDE.components(separatedBy: " ").first ?? aggregator.activeIDE))
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(textPrimary)
 

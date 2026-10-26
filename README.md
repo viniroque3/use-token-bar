@@ -35,6 +35,7 @@
 
 - **Native Menu Bar Integration**: Operates silently as an ultra-lightweight `LSUIElement` daemon without occupying Dock space.
 - **Dynamic Real-Time Model Detection**: Automatically detects the active model currently in use (e.g., `Gemini 3.8 Flash`, `Claude 3.5 Sonnet`, `GPT-4o`, `Llama 3.3`) without requiring manual selection.
+- **Multi-Project Antigravity Detection**: Automatically monitors multiple concurrent projects and active agents in Antigravity IDE with individual token breakdowns and live streaming indicators.
 - **Smart Active IDE Detection**: Monitors foreground editors, prioritizing active AI coding agents (`Antigravity IDE`, `Cursor`, `VS Code`, `Ollama`).
 - **Real-Time Throughput & Metrics**: Tracks input tokens, output tokens, cache hits, streaming speed (`t/s`), and estimated cost.
 - **Continuous Daily Usage Timeline**: Dynamic chart visualizing token consumption from the start of the day (`09:14`) to the current moment.
