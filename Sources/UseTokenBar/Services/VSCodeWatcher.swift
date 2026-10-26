@@ -40,7 +40,7 @@ public final class VSCodeWatcher {
                             name: ext.contains("roo") ? "Roo-Cline Autonomous Agent" : "Claude Dev Agent",
                             provider: providerName,
                             state: isActive ? .executingTool : .idle,
-                            currentAction: isActive ? "Executando edições no workspace" : "Concluído",
+                            currentAction: isActive ? "Executing workspace edits" : "Completed",
                             tokensSession: 14250,
                             startedAt: modDate.addingTimeInterval(-1200),
                             lastActivityAt: modDate

@@ -41,9 +41,9 @@ public final class NotificationService {
 
     private func sendThresholdNotification(totalTokens: Int, threshold: Int, model: String) {
         let content = UNMutableNotificationContent()
-        content.title = "⚠️ Use Token Bar: Limite de Tokens Atingido"
-        content.subtitle = "IA: \(model)"
-        content.body = "O consumo atual atingiu \(TokenStats.formattedNumber(totalTokens)) tokens, ultrapassando seu teto configurado de \(TokenStats.formattedNumber(threshold))."
+        content.title = "⚠️ Use Token Bar: Token Limit Exceeded"
+        content.subtitle = "AI: \(model)"
+        content.body = "Current usage reached \(TokenStats.formattedNumber(totalTokens)) tokens, exceeding your configured threshold of \(TokenStats.formattedNumber(threshold))."
         content.sound = .default
 
         let request = UNNotificationRequest(

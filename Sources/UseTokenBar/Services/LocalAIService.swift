@@ -31,7 +31,7 @@ public final class LocalAIService {
                     name: "Ollama Local Service",
                     provider: .ollama,
                     state: .idle,
-                    currentAction: "Modelos disponíveis: \(modelNames)",
+                    currentAction: "Available models: \(modelNames)",
                     tokensSession: 0,
                     startedAt: Date()
                 )
