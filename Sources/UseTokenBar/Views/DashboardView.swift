@@ -1,3 +1,18 @@
+
+// Configures the native MenuBar window to pure opaque white, eliminating the outer translucent margin
+struct MenuBarWindowAccessor: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            window.backgroundColor = .white
+            window.isOpaque = true
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
 import SwiftUI
 
 public struct DashboardView: View {
@@ -71,12 +86,8 @@ public struct DashboardView: View {
         }
         .padding(20)
         .frame(width: 450)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
-        )
+        .background(Color.white.ignoresSafeArea())
+        .background(MenuBarWindowAccessor())
     }
 
     @ViewBuilder
