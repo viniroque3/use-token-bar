@@ -50,11 +50,6 @@ public struct DesktopWidgetView: View {
         }
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: size == .small ? 20 : 24, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: size == .small ? 20 : 24, style: .continuous)
-                .stroke(Color.black.opacity(0.08), lineWidth: 1)
-        )
-        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 5)
     }
 
     // SMALL DESKTOP WIDGET (180x140)

@@ -57,6 +57,7 @@ public final class DesktopWidgetController {
         var frame = p.frame
         frame.size = NSSize(width: width, height: height)
         p.setFrame(frame, display: true, animate: true)
+        p.invalidateShadow()
 
         p.orderFrontRegardless()
     }
