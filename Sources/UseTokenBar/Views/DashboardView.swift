@@ -20,26 +20,10 @@ public struct DashboardView: View {
         return unique.isEmpty ? [preferences.selectedModel] : unique
     }
 
-    private var appIconImage: NSImage? {
-        if let path = Bundle.main.path(forResource: "AppIcon", ofType: "png") {
-            return NSImage(contentsOfFile: path)
-        }
-        return nil
-    }
-
     public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Header with App Icon & Minimal Text Actions
-            HStack(alignment: .center, spacing: 10) {
-                if let img = appIconImage {
-                    Image(nsImage: img)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 32, height: 32)
-                        .cornerRadius(7)
-                        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-                }
-
+            // Header (Clean Typography & Minimal Text Actions)
+            HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use Token Bar")
                         .font(.system(size: 16, weight: .bold))
