@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/AppIcon-1024.png" width="96" height="96" alt="Use Token Bar Icon" style="border-radius: 20px;" />
   <h1>Use Token Bar</h1>
-  <p><strong>Native, lightweight, real-time macOS menu bar monitor tracking AI developer tools and token consumption.</strong></p>
+  <p><strong>Native, lightweight, real-time macOS menu bar monitor tracking AI developer tools, multi-project workflows, and token consumption.</strong></p>
 
   <p>
     <a href="https://github.com/viniroque3/use-token-bar/releases/tag/v0.1"><img src="https://img.shields.io/badge/Release-v0.1-007AFF?style=flat-square&logo=apple&logoColor=white" alt="Release v0.1" /></a>
@@ -26,28 +26,42 @@
   <img src="assets/screenshots/dashboard.png" width="380" alt="Use Token Bar Dashboard" />
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img src="assets/screenshots/settings.png" width="380" alt="Use Token Bar Settings & History" />
-  <p><em>Use Token Bar in action: Real-Time Token Monitor, Daily History, Desktop Widgets, and Settings</em></p>
+  <p><em>Use Token Bar in action: Real-Time Token Monitor, Multi-Project Tracking, Desktop Widgets, and Settings</em></p>
 </div>
 
 ---
 
 ## ⚡ Key Features
 
-- **Native Menu Bar Integration**: Operates silently as an ultra-lightweight `LSUIElement` daemon without occupying Dock space.
-- **Dynamic Real-Time Model Detection**: Automatically detects the active model currently in use (e.g., `Gemini 3.8 Flash`, `Claude 3.5 Sonnet`, `GPT-4o`, `Llama 3.3`) without requiring manual selection.
-- **Multi-Project Antigravity Detection**: Automatically monitors multiple concurrent projects and active agents in Antigravity IDE with individual token breakdowns and live streaming indicators.
-- **Smart Active IDE Detection**: Monitors foreground editors, prioritizing active AI coding agents (`Antigravity IDE`, `Cursor`, `VS Code`, `Ollama`).
-- **Real-Time Throughput & Metrics**: Tracks input tokens, output tokens, cache hits, streaming speed (`t/s`), and estimated cost.
-- **Continuous Daily Usage Timeline**: Dynamic chart visualizing token consumption from the start of the day (`09:14`) to the current moment.
+- **Multi-Project Concurrent Detection**: Simultaneously tracks multiple open workspaces and projects in **Antigravity IDE** and other coding tools without conflict. Displays per-project agents, individual step counts, and combined cumulative token metrics.
+- **Dynamic Real-Time Model Detection**: Automatically identifies the model actively being prompted (e.g., `Gemini 3.8 Flash`, `Gemini 2.5 Pro`, `Claude 3.5 Sonnet`, `GPT-4o`, `Llama 3.3`) by inspecting live telemetry payloads.
+- **Smart Active IDE Detection**: Prioritizes foreground editors and active background streaming agents (`Antigravity IDE`, `Cursor`, `VS Code`, `Ollama`).
+- **Real-Time Throughput & Metrics**: Instant calculation of input tokens, output tokens, cache hits, streaming speeds (`t/s`), and estimated session cost.
+- **Continuous Daily Usage Timeline**: Vector chart visualizing daily token consumption curves from the first prompt of the day (`09:14`) through active and idle periods.
 - **Floating Desktop Widgets**:
-  - **Small (200x145)**: Essential metrics with fine-line rounded typography in Apple Blue.
-  - **Large (380x285)**: Comprehensive overview with vector mini-chart, clean spacing, and model breakdown.
-- **Daily Token History (First 30 Records)**: Records the first 30 events of the day with timestamp, IDE, agent, model, tokens, and estimated cost.
+  - **Small (200x145)**: Compact heads-up display with multi-project badges (`Antigravity (2P)`), token counts, cost, and streaming speed.
+  - **Large (380x285)**: Full dashboard with vector mini-chart, clean spacing, and detailed breakdown.
+- **Daily Token History (First 30 Records)**: Records the first 30 events of the day labeled by project, agent, model, tokens, and cost.
 - **Instant Excel & CSV Export**:
-  - **Excel (`.xls`)**: Formatted spreadsheet with structured XML schema headers and totals.
-  - **CSV (UTF-8 with BOM)**: Out-of-the-box compatibility with Microsoft Excel, Numbers, and Google Sheets.
-  - **Safe SQLite Persistence**: Zero-lock read-only access (`sqlite3_busy_timeout`) preventing write blocking during compaction and live executions.
-- **System Notifications & Launch at Login**: Native alerts when exceeding session token thresholds and macOS startup support via `SMAppService`.
+  - **Excel (`.xls`)**: Formatted XML schema spreadsheet with headers, formulas, and totals.
+  - **CSV (UTF-8 with BOM)**: Direct import compatibility with Microsoft Excel, Apple Numbers, and Google Sheets.
+- **Safe Zero-Lock SQLite Reader**: Uses non-blocking `sqlite3_busy_timeout` and `SQLITE_OPEN_READONLY` to avoid lock contention with running IDE processes.
+- **System Notifications & Launch at Login**: Native alerts when approaching session limits and seamless startup integration via `SMAppService`.
+
+---
+
+## 🚀 Multi-Project & Multi-Agent Tracking
+
+When working across multiple repositories simultaneously (for example, working on `Use Token Bar` and a web frontend like `fivegen-web` at the same time in Antigravity IDE):
+
+1. **Automatic Discovery**: The application monitors live SQLite Write-Ahead Logs (`.db-wal`) and modification times across conversation databases.
+2. **Per-Project Agents**: Each active workspace is detected and listed individually in the **Connected Agents** section (e.g. `Antigravity (Use Token Bar)` and `Antigravity (fivegen-web)`).
+3. **Execution State Isolation**: Each project maintains its own state dot:
+   - 🟢 **Generating / Streaming**: Agent is actively synthesizing code or calling tools.
+   - 🟠 **Running Tool**: Agent is executing shell commands or database operations.
+   - 🔵 **Awaiting Prompt**: Task completed; waiting for next user instruction.
+   - ⚪ **Idle**: Project open with recorded history.
+4. **Aggregated Global Metrics**: Menu bar icons, total tokens, daily chart timelines, and cost calculations seamlessly accumulate the true total across all running projects.
 
 ---
 
@@ -96,7 +110,7 @@ cd use-token-bar
 make install
 ```
 
-The installer will build the release binary, install the `.app` into `/Applications`, and register the `use-token-bar` CLI command in your Terminal.
+The installer builds the release binary, installs the `.app` into `/Applications`, and registers the `use-token-bar` CLI command in your Terminal.
 
 ---
 
@@ -104,7 +118,7 @@ The installer will build the release binary, install the `.app` into `/Applicati
 
 | Environment / Tool | Inspection Method | Tracked Metrics |
 | :--- | :--- | :--- |
-| **Antigravity IDE** | Native Darwin SQLite3 (`conversations/*.db`) | Step payloads, conversation topics, compactions |
+| **Antigravity IDE** | Native Darwin SQLite3 (`conversations/*.db`) | Multi-project sessions, step payloads, topics, compactions |
 | **VS Code (Copilot / Cline / Roo)** | Local Extension Storage & Task JSON | Input/output tokens, cache hits, estimated cost |
 | **Cursor & Codex CLI** | POSIX Process Table & Workspaces | Lifecycle detection and active agent status |
 | **Ollama / Local LLMs** | Async REST Polling (`localhost:11434`) | Loaded models and local telemetry |
