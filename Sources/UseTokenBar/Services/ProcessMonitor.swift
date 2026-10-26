@@ -11,15 +11,22 @@ public final class ProcessMonitor {
         var detected: Set<AIAppProvider> = []
 
         for app in runningApps {
-            guard let bundleId = app.bundleIdentifier?.lowercased() ?? app.localizedName?.lowercased() else {
+            guard let bundleId = app.bundleIdentifier?.lowercased() else {
                 continue
             }
 
-            if bundleId.contains("antigravity") {
+            // Exclude Apple system UI services (e.g. TextInputUI CursorUIViewService)
+            if bundleId.hasPrefix("com.apple.") {
+                continue
+            }
+
+            let appName = (app.localizedName ?? "").lowercased()
+
+            if bundleId.contains("antigravity") || appName.contains("antigravity") {
                 detected.insert(.antigravity)
-            } else if bundleId.contains("cursor") {
+            } else if bundleId.contains("todesktop.230313mzl4w4u92") || bundleId == "com.cursor.ide" || appName == "cursor" {
                 detected.insert(.cursor)
-            } else if bundleId.contains("vscode") || bundleId.contains("com.microsoft.vscode") {
+            } else if bundleId.contains("com.microsoft.vscode") || bundleId.contains("visual-studio-code") || appName == "code" {
                 detected.insert(.vsCode)
             }
         }

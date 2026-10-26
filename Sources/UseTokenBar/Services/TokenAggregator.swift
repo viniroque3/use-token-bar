@@ -93,15 +93,17 @@ public final class TokenAggregator: ObservableObject {
             )
         }
 
-        // Determine active IDE
-        if let generating = mergedAgents.first(where: { $0.state == .generating || $0.state == .executingTool }) {
+        // Determine active IDE (prioritizing active AI IDE with generation/activity)
+        if mergedAgents.contains(where: { $0.provider == .antigravity }) || runningApps.contains(.antigravity) {
+            self.activeIDE = AIAppProvider.antigravity.rawValue
+        } else if let generating = mergedAgents.first(where: { $0.state == .generating || $0.state == .executingTool }) {
             self.activeIDE = generating.provider.rawValue
         } else if let activeWithTokens = mergedAgents.first(where: { $0.tokensSession > 0 }) {
             self.activeIDE = activeWithTokens.provider.rawValue
         } else if let running = runningApps.first {
             self.activeIDE = running.rawValue
         } else {
-            self.activeIDE = "Antigravity IDE"
+            self.activeIDE = AIAppProvider.antigravity.rawValue
         }
 
         // Live Dynamic Chart Feed spanning entire day from start of usage
