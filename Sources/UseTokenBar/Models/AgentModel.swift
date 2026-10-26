@@ -20,6 +20,7 @@ public struct AgentModel: Identifiable, Codable {
     public let id: UUID
     public let name: String
     public let provider: AIAppProvider
+    public var modelName: String
     public var state: AgentExecutionState
     public var currentAction: String
     public var tokensSession: Int
@@ -30,6 +31,7 @@ public struct AgentModel: Identifiable, Codable {
         id: UUID = UUID(),
         name: String,
         provider: AIAppProvider,
+        modelName: String = "Gemini 3.8 Flash",
         state: AgentExecutionState = .idle,
         currentAction: String = "Ocioso",
         tokensSession: Int = 0,
@@ -39,6 +41,7 @@ public struct AgentModel: Identifiable, Codable {
         self.id = id
         self.name = name
         self.provider = provider
+        self.modelName = modelName
         self.state = state
         self.currentAction = currentAction
         self.tokensSession = tokensSession

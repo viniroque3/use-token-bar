@@ -61,9 +61,12 @@ public final class AntigravityWatcher {
                     actionText = "Sessão pausada (\(dbMetrics.totalSteps) passos gravados)"
                 }
 
+                let currentModel = UserPreferences.shared.selectedModel
+
                 activeAgents.append(AgentModel(
-                    name: "Antigravity Agent",
+                    name: "Antigravity Pair-Programmer",
                     provider: .antigravity,
+                    modelName: currentModel,
                     state: executionState,
                     currentAction: actionText,
                     tokensSession: estimatedTokens,
@@ -88,10 +91,8 @@ public final class AntigravityWatcher {
         var metrics = DBQueryMetrics()
         var db: OpaquePointer?
 
-        // Open read-only and no mutex for maximum concurrency with Antigravity IDE
         let flags = SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX
         if sqlite3_open_v2(dbPath, &db, flags, nil) == SQLITE_OK {
-            // Query total steps and running steps (status = 2)
             let sql = "SELECT count(*), sum(case when status = 2 then 1 else 0 end), coalesce(sum(length(step_payload)), 0) FROM steps;"
             var stmt: OpaquePointer?
             if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {

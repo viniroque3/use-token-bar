@@ -9,49 +9,63 @@ public struct DashboardView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             // Header
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                        .foregroundColor(.purple)
-                    Text("Use Token Bar")
-                        .font(.system(size: 14, weight: .bold))
+            HStack(alignment: .center) {
+                HStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [Color.purple, Color.blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 26, height: 26)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Use Token Bar")
+                            .font(.system(size: 15, weight: .bold))
+                        Text("Monitor de IA em Tempo Real")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 Spacer()
 
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        preferences.showingSettings.toggle()
+                HStack(spacing: 10) {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            preferences.showingSettings.toggle()
+                        }
+                    }) {
+                        Image(systemName: preferences.showingSettings ? "xmark.circle.fill" : "gearshape.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(preferences.showingSettings ? .primary : .secondary)
                     }
-                }) {
-                    Image(systemName: preferences.showingSettings ? "xmark.circle" : "gearshape")
-                        .font(.system(size: 12))
-                        .foregroundColor(preferences.showingSettings ? .primary : .secondary)
-                }
-                .buttonStyle(.plain)
-                .help(preferences.showingSettings ? "Voltar ao painel" : "Preferências")
+                    .buttonStyle(.plain)
+                    .help(preferences.showingSettings ? "Voltar ao painel" : "Preferências")
 
-                Button(action: {
-                    aggregator.refreshMetrics()
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help("Atualizar métricas agora")
+                    Button(action: {
+                        aggregator.refreshMetrics()
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Atualizar métricas agora")
 
-                Button(action: {
-                    NSApplication.shared.terminate(nil)
-                }) {
-                    Image(systemName: "power")
-                        .font(.system(size: 11))
-                        .foregroundColor(.red.opacity(0.8))
+                    Button(action: {
+                        NSApplication.shared.terminate(nil)
+                    }) {
+                        Image(systemName: "power")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.red.opacity(0.85))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Encerrar aplicativo")
                 }
-                .buttonStyle(.plain)
-                .help("Encerrar aplicativo")
             }
             .padding(.bottom, 2)
 
@@ -61,27 +75,110 @@ public struct DashboardView: View {
                 mainDashboardView
             }
         }
-        .padding(14)
-        .frame(width: 350)
+        .padding(16)
+        .frame(width: 450)
     }
 
     @ViewBuilder
     private var mainDashboardView: some View {
-        if aggregator.stats.totalTokens > preferences.alertThresholdTokens {
+        // Active AI Model Banner & Quick Switcher
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(modelColorGradient.opacity(0.18))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: modelIconName)
+                        .font(.system(size: 16))
+                        .foregroundColor(modelAccentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("IA Em Uso:")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Text(preferences.selectedModel)
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundColor(.primary)
+                    }
+
+                    Text("Raciocínio & Geração Ativa • Contexto Estendido")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(aggregator.isGenerating ? Color.green : Color.orange)
+                        .frame(width: 7, height: 7)
+                    Text(aggregator.isGenerating ? "Processando" : "Pronto")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(aggregator.isGenerating ? .green : .orange)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background((aggregator.isGenerating ? Color.green : Color.orange).opacity(0.12))
+                .clipShape(Capsule())
+            }
+            .padding(10)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(modelAccentColor.opacity(0.2), lineWidth: 1)
+            )
+
+            // Quick Model Selector Chips
             HStack(spacing: 6) {
+                ForEach(["Gemini 3.8 Flash", "Argon Reasoning", "Claude Opus 5.5"], id: \.self) { model in
+                    let isSelected = preferences.selectedModel == model
+                    Button(action: {
+                        preferences.selectedModel = model
+                        aggregator.refreshMetrics()
+                    }) {
+                        HStack(spacing: 4) {
+                            if isSelected {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 8, weight: .bold))
+                            }
+                            Text(model.replacingOccurrences(of: "Gemini ", with: "").replacingOccurrences(of: "Claude ", with: "").replacingOccurrences(of: " Reasoning", with: ""))
+                                .font(.system(size: 10, weight: isSelected ? .bold : .medium))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(isSelected ? modelAccentColor.opacity(0.22) : Color(NSColor.controlBackgroundColor).opacity(0.5))
+                        .foregroundColor(isSelected ? modelAccentColor : .secondary)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isSelected ? modelAccentColor.opacity(0.4) : Color.clear, lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
+            }
+        }
+
+        // Warning banner if threshold exceeded
+        if aggregator.stats.totalTokens > preferences.alertThresholdTokens {
+            HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.yellow)
                 Text("Limite de tokens na sessão atingido (\(TokenStats.formattedNumber(preferences.alertThresholdTokens)))")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                 Spacer()
             }
-            .padding(6)
+            .padding(8)
             .background(Color.yellow.opacity(0.15))
-            .cornerRadius(6)
+            .cornerRadius(8)
         }
 
         // Metrics Grid
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             MetricCard(
                 title: "Total Tokens",
                 value: TokenStats.formattedNumber(aggregator.stats.totalTokens),
@@ -101,39 +198,30 @@ public struct DashboardView: View {
             MetricCard(
                 title: "Velocidade",
                 value: String(format: "%.0f t/s", aggregator.stats.tokensPerSecond),
-                caption: aggregator.isGenerating ? "Gerando" : "Ocioso",
+                caption: aggregator.isGenerating ? "Ativo" : "Ocioso",
                 icon: "bolt.fill",
                 color: aggregator.isGenerating ? .orange : .gray
             )
         }
 
-        // Breakdown
-        HStack {
-            Text("Entrada: \(TokenStats.formattedNumber(aggregator.stats.inputTokens))")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text("Saída: \(TokenStats.formattedNumber(aggregator.stats.outputTokens))")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.secondary)
-            Spacer()
-            Text("Cache: \(TokenStats.formattedNumber(aggregator.stats.cachedTokens))")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundColor(.secondary)
+        // Breakdown Pills
+        HStack(spacing: 8) {
+            TokenPill(title: "Entrada", count: aggregator.stats.inputTokens, color: .blue)
+            TokenPill(title: "Saída", count: aggregator.stats.outputTokens, color: .purple)
+            TokenPill(title: "Cache", count: aggregator.stats.cachedTokens, color: .green)
         }
-        .padding(.horizontal, 4)
 
         // Historical Chart
         StatsChartView(history: aggregator.historyPoints)
 
         // Active Agents Section
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Agentes e Programas de IA")
-                    .font(.system(size: 11, weight: .bold))
+                Text("Agentes e Programas Conectados")
+                    .font(.system(size: 12, weight: .bold))
                 Spacer()
-                Text("\(aggregator.activeAgents.count) ativos")
-                    .font(.system(size: 10))
+                Text("\(aggregator.activeAgents.count) detectados")
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(.secondary)
             }
 
@@ -145,16 +233,16 @@ public struct DashboardView: View {
                         .foregroundColor(.secondary)
                     Spacer()
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 14)
             } else {
                 ScrollView {
-                    VStack(spacing: 6) {
+                    VStack(spacing: 8) {
                         ForEach(aggregator.activeAgents) { agent in
                             AgentRowView(agent: agent)
                         }
                     }
                 }
-                .frame(maxHeight: 150)
+                .frame(maxHeight: 160)
             }
         }
 
@@ -162,8 +250,8 @@ public struct DashboardView: View {
 
         // Footer
         HStack {
-            Text("Antigravity • VS Code • Cursor • Codex")
-                .font(.system(size: 9))
+            Text("Antigravity • VS Code • Cursor • Codex • Ollama")
+                .font(.system(size: 10))
                 .foregroundColor(.secondary)
             Spacer()
             Button("Zerar Sessão") {
@@ -171,19 +259,39 @@ public struct DashboardView: View {
                 aggregator.refreshMetrics()
             }
             .buttonStyle(.borderless)
-            .font(.system(size: 10))
+            .font(.system(size: 11, weight: .medium))
         }
     }
 
     @ViewBuilder
     private var settingsView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("Configurações do Monitor")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Exibição na Barra de Menus")
-                    .font(.system(size: 10, weight: .medium))
+            // Model Selection in Settings
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Modelo Padrão em Uso")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(.secondary)
+
+                Picker("", selection: Binding(
+                    get: { preferences.selectedModel },
+                    set: {
+                        preferences.selectedModel = $0
+                        aggregator.refreshMetrics()
+                    }
+                )) {
+                    ForEach(UserPreferences.availablePresetModels, id: \.self) { model in
+                        Text(model).tag(model)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Formato do Ícone na Barra de Menus")
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.secondary)
 
                 Picker("", selection: Binding(
@@ -197,14 +305,14 @@ public struct DashboardView: View {
                 .pickerStyle(.segmented)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Custo por Milhão de Tokens:")
-                        .font(.system(size: 10, weight: .medium))
+                    Text("Custo Médio por 1M de Tokens:")
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(String(format: "$%.2f", preferences.costPerMillionTokens))
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
                 }
                 Slider(value: Binding(
                     get: { preferences.costPerMillionTokens },
@@ -212,14 +320,14 @@ public struct DashboardView: View {
                 ), in: 0.5...15.0, step: 0.25)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("Alerta de Limite na Sessão:")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                     Spacer()
                     Text(TokenStats.formattedNumber(preferences.alertThresholdTokens))
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
                 }
                 Slider(value: Binding(
                     get: { Double(preferences.alertThresholdTokens) },
@@ -231,25 +339,51 @@ public struct DashboardView: View {
 
             HStack {
                 Button("Restaurar Padrões") {
-                    preferences.displayMode = MenuBarDisplayMode.iconAndTokens.rawValue
+                    preferences.displayMode = MenuBarDisplayMode.iconModelAndTokens.rawValue
+                    preferences.selectedModel = "Gemini 3.8 Flash"
                     preferences.costPerMillionTokens = 2.50
-                    preferences.alertThresholdTokens = 150_000
+                    preferences.alertThresholdTokens = 200_000
+                    aggregator.refreshMetrics()
                 }
                 .buttonStyle(.borderless)
-                .font(.system(size: 10))
+                .font(.system(size: 11))
 
                 Spacer()
 
-                Button("Concluído") {
+                Button("Salvar e Fechar") {
                     withAnimation {
                         preferences.showingSettings = false
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .controlSize(.regular)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
+    }
+
+    private var modelAccentColor: Color {
+        let m = preferences.selectedModel
+        if m.contains("Flash") { return .purple }
+        if m.contains("Argon") { return .blue }
+        if m.contains("Opus") { return .orange }
+        return .green
+    }
+
+    private var modelIconName: String {
+        let m = preferences.selectedModel
+        if m.contains("Flash") { return "bolt.fill" }
+        if m.contains("Argon") { return "brain" }
+        if m.contains("Opus") { return "theatermasks.fill" }
+        return "cpu"
+    }
+
+    private var modelColorGradient: LinearGradient {
+        LinearGradient(
+            colors: [modelAccentColor, modelAccentColor.opacity(0.6)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 
@@ -261,23 +395,52 @@ struct MetricCard: View {
     let color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: icon)
-                    .font(.system(size: 10))
+                    .font(.system(size: 12))
                     .foregroundColor(color)
                 Spacer()
             }
             Text(value)
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                .font(.system(size: 17, weight: .bold, design: .monospaced))
                 .foregroundColor(.primary)
             Text(caption)
-                .font(.system(size: 9))
+                .font(.system(size: 10))
                 .foregroundColor(.secondary)
         }
-        .padding(8)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.8))
-        .cornerRadius(8)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.85))
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+        )
+    }
+}
+
+struct TokenPill: View {
+    let title: String
+    let count: Int
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 6, height: 6)
+            Text("\(title):")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.secondary)
+            Text(TokenStats.formattedNumber(count))
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(.primary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .frame(maxWidth: .infinity)
+        .background(Color(NSColor.controlBackgroundColor).opacity(0.6))
+        .cornerRadius(6)
     }
 }

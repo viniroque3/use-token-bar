@@ -9,6 +9,16 @@ public struct MenuBarIconView: View {
         self.preferences = preferences
     }
 
+    private var modelShortName: String {
+        let full = preferences.selectedModel
+        if full.contains("Flash") { return "3.8 Flash" }
+        if full.contains("Argon") { return "Argon" }
+        if full.contains("Opus") { return "Opus 5.5" }
+        if full.contains("Sonnet") { return "Sonnet" }
+        if full.contains("GPT-4o") { return "GPT-4o" }
+        return full
+    }
+
     public var body: some View {
         HStack(spacing: 5) {
             if #available(macOS 14.0, *) {
@@ -20,7 +30,10 @@ public struct MenuBarIconView: View {
                     .foregroundColor(aggregator.isGenerating ? .green : .primary)
             }
 
-            if preferences.displayMode == MenuBarDisplayMode.iconAndTokens.rawValue {
+            if preferences.displayMode == MenuBarDisplayMode.iconModelAndTokens.rawValue {
+                Text("\(modelShortName) • \(TokenStats.formattedNumber(aggregator.stats.totalTokens))")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            } else if preferences.displayMode == MenuBarDisplayMode.iconAndTokens.rawValue {
                 Text(TokenStats.formattedNumber(aggregator.stats.totalTokens))
                     .font(.system(size: 11, weight: .semibold, design: .monospaced))
             } else if preferences.displayMode == MenuBarDisplayMode.iconAndAgents.rawValue {
