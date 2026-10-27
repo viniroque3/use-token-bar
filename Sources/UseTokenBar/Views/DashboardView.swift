@@ -20,6 +20,7 @@ struct MenuBarWindowAccessor: NSViewRepresentable {
 public struct DashboardView: View {
     @ObservedObject var aggregator: TokenAggregator
     @ObservedObject var preferences: UserPreferences = .shared
+    @ObservedObject var updater: UpdateCheckService = .shared
 
     private let appleBlue = Color(red: 0.0, green: 0.478, blue: 1.0)
     private let textPrimary = Color(red: 0.11, green: 0.11, blue: 0.13)
@@ -702,33 +703,125 @@ public struct DashboardView: View {
                     .padding(.horizontal, 24)
                     .lineSpacing(2)
 
-                Button(action: {
-                    if let url = URL(string: "https://github.com/viniroque3/use-token-bar") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color(red: 1.0, green: 0.82, blue: 0.10))
-                        Text("Star on GitHub")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 9)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(red: 0.16, green: 0.17, blue: 0.20), Color(red: 0.08, green: 0.09, blue: 0.11)],
-                            startPoint: .top,
-                            endPoint: .bottom
+                HStack(spacing: 10) {
+                    // Star on GitHub button (in project design system)
+                    Button(action: {
+                        if let url = URL(string: "https://github.com/viniroque3/use-token-bar") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 11))
+                                .foregroundColor(Color(red: 0.98, green: 0.75, blue: 0.12))
+                            Text("Star on GitHub")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(textPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 7)
+                        .background(Color.white)
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.black.opacity(0.12), lineWidth: 1)
                         )
-                    )
-                    .cornerRadius(8)
-                    .shadow(color: Color.black.opacity(0.18), radius: 4, x: 0, y: 2)
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
+                    }
+                    .buttonStyle(.plain)
+
+                    // Check for Updates button
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            updater.checkForUpdates()
+                        }
+                    }) {
+                        HStack(spacing: 5) {
+                            if updater.status == .checking {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .scaleEffect(0.65)
+                            } else {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.system(size: 11))
+                            }
+                            Text(updater.status == .checking ? "Checking..." : "Check for Updates")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .foregroundColor(appleBlue)
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 7)
+                        .background(appleBlue.opacity(0.08))
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(appleBlue.opacity(0.22), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(updater.status == .checking)
                 }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
+                .padding(.top, 2)
+
+                // Update Status Feedback
+                switch updater.status {
+                case .upToDate(let ver):
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.35))
+                        Text("You're on the latest version (\(ver))")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Color(red: 0.15, green: 0.65, blue: 0.30))
+                    }
+                    .transition(.opacity)
+
+                case .updateAvailable(let ver, let url):
+                    VStack(spacing: 6) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color(red: 1.0, green: 0.58, blue: 0.0))
+                                .frame(width: 6, height: 6)
+                            Text("New version \(ver) is available!")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(textPrimary)
+                            Spacer()
+                            Button("Download") {
+                                NSWorkspace.shared.open(url)
+                            }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(appleBlue)
+                            .cornerRadius(6)
+                        }
+                    }
+                    .padding(8)
+                    .background(Color.white)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(appleBlue.opacity(0.25), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
+                    .transition(.opacity)
+
+                case .failed(let msg):
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.circle")
+                            .font(.system(size: 10))
+                            .foregroundColor(Color(red: 0.85, green: 0.25, blue: 0.20))
+                        Text(msg)
+                            .font(.system(size: 10))
+                            .foregroundColor(textSecondary)
+                    }
+                    .transition(.opacity)
+
+                case .idle, .checking:
+                    EmptyView()
+                }
 
                 VStack(spacing: 3) {
                     Text("Crafted by viniroque")
@@ -738,7 +831,7 @@ public struct DashboardView: View {
                         .font(.system(size: 9))
                         .foregroundColor(textSecondary.opacity(0.7))
                 }
-                .padding(.top, 4)
+                .padding(.top, 2)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
