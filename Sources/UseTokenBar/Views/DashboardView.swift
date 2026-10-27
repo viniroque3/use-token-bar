@@ -1,4 +1,7 @@
 
+import SwiftUI
+import AppKit
+
 // Configures the native MenuBar window to pure opaque white, eliminating the outer translucent margin
 struct MenuBarWindowAccessor: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
@@ -13,7 +16,6 @@ struct MenuBarWindowAccessor: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
-import SwiftUI
 
 public struct DashboardView: View {
     @ObservedObject var aggregator: TokenAggregator
@@ -51,9 +53,24 @@ public struct DashboardView: View {
                 Spacer()
 
                 HStack(spacing: 12) {
+                    Button(preferences.showingAbout ? "Back" : "About") {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            preferences.showingAbout.toggle()
+                            if preferences.showingAbout {
+                                preferences.showingSettings = false
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(preferences.showingAbout ? appleBlue : textSecondary)
+
                     Button(preferences.showingSettings ? "Close" : "Settings") {
                         withAnimation(.easeInOut(duration: 0.15)) {
                             preferences.showingSettings.toggle()
+                            if preferences.showingSettings {
+                                preferences.showingAbout = false
+                            }
                         }
                     }
                     .buttonStyle(.plain)
@@ -78,7 +95,9 @@ public struct DashboardView: View {
 
             Divider()
 
-            if preferences.showingSettings {
+            if preferences.showingAbout {
+                aboutView
+            } else if preferences.showingSettings {
                 settingsView
             } else {
                 mainDashboardView
@@ -332,9 +351,25 @@ public struct DashboardView: View {
 
             Spacer()
 
-            Text("Antigravity • VS Code • Codex")
-                .font(.system(size: 10))
-                .foregroundColor(textSecondary)
+            Button(action: {
+                if let url = URL(string: "https://github.com/viniroque3/use-token-bar") {
+                    NSWorkspace.shared.open(url)
+                }
+            }) {
+                HStack(spacing: 5) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(Color(red: 0.98, green: 0.75, blue: 0.12))
+                    Text("Star on GitHub")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(textPrimary)
+                }
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(Color.black.opacity(0.04))
+                .cornerRadius(5)
+            }
+            .buttonStyle(.plain)
 
             Spacer()
 
@@ -620,6 +655,95 @@ public struct DashboardView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
             }
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private var aboutView: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("About")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(textPrimary)
+                Spacer()
+                Button("Done") {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        preferences.showingAbout = false
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(appleBlue)
+            }
+
+            VStack(spacing: 14) {
+                Image(nsImage: NSApplication.shared.applicationIconImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 76, height: 76)
+                    .cornerRadius(18)
+                    .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 3)
+
+                VStack(spacing: 3) {
+                    Text("Use Token Bar")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(textPrimary)
+
+                    Text("Version 0.2")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(appleBlue)
+                }
+
+                Text("Real-Time AI Token Monitor & Agent Telemetry for Antigravity, VS Code, Cursor & Codex.")
+                    .font(.system(size: 11))
+                    .foregroundColor(textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .lineSpacing(2)
+
+                Button(action: {
+                    if let url = URL(string: "https://github.com/viniroque3/use-token-bar") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }) {
+                    HStack(spacing: 7) {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color(red: 1.0, green: 0.82, blue: 0.10))
+                        Text("Star on GitHub")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 9)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(red: 0.16, green: 0.17, blue: 0.20), Color(red: 0.08, green: 0.09, blue: 0.11)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .cornerRadius(8)
+                    .shadow(color: Color.black.opacity(0.18), radius: 4, x: 0, y: 2)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+
+                VStack(spacing: 3) {
+                    Text("Crafted by viniroque")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(textSecondary)
+                    Text("Open Source • MIT License")
+                        .font(.system(size: 9))
+                        .foregroundColor(textSecondary.opacity(0.7))
+                }
+                .padding(.top, 4)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            .cornerRadius(12)
         }
         .padding(.vertical, 4)
     }

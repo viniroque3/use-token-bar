@@ -23,6 +23,7 @@ public final class UserPreferences: ObservableObject {
     @AppStorage("desktopWidgetSize") public var desktopWidgetSize: String = DesktopWidgetSize.off.rawValue
 
     @Published public var showingSettings: Bool = false
+    @Published public var showingAbout: Bool = false
     @Published public var exportStatusMessage: String? = nil
 
     public static let availablePresetModels: [String] = [
