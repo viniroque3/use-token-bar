@@ -3,7 +3,7 @@ import Foundation
 public struct TokenDataPoint: Identifiable, Codable {
     public let id: UUID
     public let timestamp: Date
-    public let tokens: Int
+    public var tokens: Int
     public let provider: AIAppProvider
 
     public init(id: UUID = UUID(), timestamp: Date, tokens: Int, provider: AIAppProvider) {

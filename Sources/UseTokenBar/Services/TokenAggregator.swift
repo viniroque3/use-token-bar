@@ -32,7 +32,15 @@ public final class TokenAggregator: ObservableObject {
             self.dailyRecords = []
         } else {
             let todayPoints = store.timelinePoints.filter { Calendar.current.isDateInToday($0.timestamp) }
-            self.historyPoints = todayPoints.isEmpty ? AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: store.todayTotalTokens) : todayPoints
+            if todayPoints.count < 3 {
+                let generated = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: store.todayTotalTokens)
+                self.historyPoints = generated
+                if !generated.isEmpty {
+                    HistoryStorageService.shared.saveTimelinePoints(generated)
+                }
+            } else {
+                self.historyPoints = todayPoints
+            }
             self.dailyRecords = store.dailyRecords
         }
     }
@@ -175,18 +183,21 @@ public final class TokenAggregator: ObservableObject {
         // Clean any stale non-today points
         historyPoints = historyPoints.filter { Calendar.current.isDateInToday($0.timestamp) }
 
-        if historyPoints.isEmpty {
+        if historyPoints.count < 3 {
             self.historyPoints = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: currentTotal)
+            if !self.historyPoints.isEmpty {
+                HistoryStorageService.shared.saveTimelinePoints(self.historyPoints)
+            }
         } else if let last = historyPoints.last {
             let newTotal = max(last.tokens, currentTotal)
             let newPoint = TokenDataPoint(timestamp: now, tokens: newTotal, provider: .antigravity)
 
-            if now.timeIntervalSince(last.timestamp) >= 15 {
+            if now.timeIntervalSince(last.timestamp) >= 30 {
                 historyPoints.append(newPoint)
                 HistoryStorageService.shared.recordTimelinePoint(newPoint)
             } else if let lastIndex = historyPoints.indices.last {
-                historyPoints[lastIndex] = newPoint
-                HistoryStorageService.shared.recordTimelinePoint(newPoint)
+                historyPoints[lastIndex].tokens = newTotal
+                HistoryStorageService.shared.recordTimelinePoint(historyPoints[lastIndex])
             }
         } else {
             let point = TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity)

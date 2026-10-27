@@ -37,7 +37,7 @@
 - **Dynamic Real-Time Model Detection**: Automatically identifies the model actively being prompted (e.g., `Gemini 3.8 Flash`, `Gemini 2.5 Pro`, `Claude 3.5 Sonnet`, `GPT-4o`, `Llama 3.3`) by inspecting live telemetry payloads.
 - **Smart Active IDE Detection**: Prioritizes foreground editors and active background streaming agents (`Antigravity IDE`, `Cursor`, `VS Code`, `Ollama`).
 - **Real-Time Throughput & Metrics**: Instant calculation of input tokens, output tokens, cache hits, streaming speeds (`t/s`), and estimated session cost.
-- **Continuous Daily Usage Timeline**: Vector chart visualizing daily token consumption curves from the first prompt of the day (`09:14`) through active and idle periods.
+- **Continuous Daily Usage Timeline**: Real-time vector chart visualizing the complete day's token consumption curve, capturing rapid generation bursts as upward slopes and inactivity as flat horizontal plateaus without artificial ramps.
 - **Floating Desktop Widgets**:
   - **Small (200x145)**: Compact heads-up display with multi-project badges (`Antigravity (2P)`), token counts, cost, and streaming speed.
   - **Large (380x285)**: Full dashboard with vector mini-chart, clean spacing, and detailed breakdown.

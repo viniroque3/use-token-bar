@@ -94,6 +94,21 @@ public final class HistoryStorageService {
         }
     }
 
+    public func saveTimelinePoints(_ points: [TokenDataPoint]) {
+        var store = loadStore()
+        let todayStart = Calendar.current.startOfDay(for: Date())
+        if !Calendar.current.isDate(store.lastTrackingDay, inSameDayAs: todayStart) {
+            store.lastTrackingDay = todayStart
+            store.timelinePoints = []
+            store.todayTotalTokens = 0
+        }
+        store.timelinePoints = points
+        if let maxTokens = points.map(\.tokens).max() {
+            store.todayTotalTokens = max(store.todayTotalTokens, maxTokens)
+        }
+        saveStore(store)
+    }
+
     public func recordTimelinePoint(_ point: TokenDataPoint) {
         var store = loadStore()
         let todayStart = Calendar.current.startOfDay(for: Date())
@@ -103,12 +118,12 @@ public final class HistoryStorageService {
             store.todayTotalTokens = 0
         }
 
-        // Monotonic guarantee for today's points
+        // Monotonic guarantee for today's points with non-resetting throttle
         if let last = store.timelinePoints.last {
-            if point.timestamp.timeIntervalSince(last.timestamp) >= 15 {
+            if point.timestamp.timeIntervalSince(last.timestamp) >= 30 {
                 store.timelinePoints.append(point)
             } else if let lastIdx = store.timelinePoints.indices.last {
-                store.timelinePoints[lastIdx] = point
+                store.timelinePoints[lastIdx].tokens = max(store.timelinePoints[lastIdx].tokens, point.tokens)
             }
         } else {
             store.timelinePoints.append(point)

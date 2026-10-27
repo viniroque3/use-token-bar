@@ -18,21 +18,32 @@ public struct StatsChartView: View {
         let todayPoints = history.filter { Calendar.current.isDateInToday($0.timestamp) }
             .sorted { $0.timestamp < $1.timestamp }
 
+        let now = Date()
+
         if todayPoints.isEmpty {
-            let now = Date()
             let start = Calendar.current.startOfDay(for: now).addingTimeInterval(8 * 3600)
             return [
-                TokenDataPoint(timestamp: start, tokens: 0, provider: .antigravity),
+                TokenDataPoint(timestamp: min(start, now.addingTimeInterval(-600)), tokens: 0, provider: .antigravity),
                 TokenDataPoint(timestamp: now, tokens: aggregator.stats.totalTokens, provider: .antigravity)
             ]
         } else if todayPoints.count == 1, let first = todayPoints.first {
-            let start = first.timestamp.addingTimeInterval(-180)
-            return [
-                TokenDataPoint(timestamp: start, tokens: 0, provider: first.provider),
+            let startOfDay = Calendar.current.startOfDay(for: first.timestamp).addingTimeInterval(8 * 3600)
+            let baseTime = min(startOfDay, first.timestamp.addingTimeInterval(-1800))
+            var points = [
+                TokenDataPoint(timestamp: baseTime, tokens: 0, provider: first.provider),
                 first
             ]
+            if now.timeIntervalSince(first.timestamp) > 30 {
+                points.append(TokenDataPoint(timestamp: now, tokens: first.tokens, provider: first.provider))
+            }
+            return points
         }
-        return todayPoints
+
+        var result = todayPoints
+        if let last = todayPoints.last, now.timeIntervalSince(last.timestamp) > 30 {
+            result.append(TokenDataPoint(timestamp: now, tokens: last.tokens, provider: last.provider))
+        }
+        return result
     }
 
     private var maxTokenValue: Int {
