@@ -14,7 +14,35 @@ public struct StatsChartView: View {
     private let textPrimary = Color(red: 0.11, green: 0.11, blue: 0.13)
     private let textSecondary = Color(red: 0.55, green: 0.55, blue: 0.58)
 
+    private var displayPoints: [TokenDataPoint] {
+        let todayPoints = history.filter { Calendar.current.isDateInToday($0.timestamp) }
+            .sorted { $0.timestamp < $1.timestamp }
+
+        if todayPoints.isEmpty {
+            let now = Date()
+            let start = Calendar.current.startOfDay(for: now).addingTimeInterval(8 * 3600)
+            return [
+                TokenDataPoint(timestamp: start, tokens: 0, provider: .antigravity),
+                TokenDataPoint(timestamp: now, tokens: aggregator.stats.totalTokens, provider: .antigravity)
+            ]
+        } else if todayPoints.count == 1, let first = todayPoints.first {
+            let start = first.timestamp.addingTimeInterval(-180)
+            return [
+                TokenDataPoint(timestamp: start, tokens: 0, provider: first.provider),
+                first
+            ]
+        }
+        return todayPoints
+    }
+
+    private var maxTokenValue: Int {
+        let highest = displayPoints.map(\.tokens).max() ?? 1000
+        return max(10_000, highest)
+    }
+
     public var body: some View {
+        let points = displayPoints
+
         VStack(alignment: .leading, spacing: 6) {
             // Header with interactive hover feedback showing daily timeline & IDE
             HStack(alignment: .firstTextBaseline) {
@@ -22,7 +50,7 @@ public struct StatsChartView: View {
                     Text("Daily Usage Timeline")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(textPrimary)
-                    if let first = history.first, let last = history.last {
+                    if let first = points.first, let last = points.last {
                         Text("\(first.timestamp.formatted(date: .omitted, time: .shortened)) - \(last.timestamp.formatted(date: .omitted, time: .shortened)) • \(aggregator.activeIDE) • \(aggregator.conversationTopic)")
                             .font(.system(size: 10))
                             .foregroundColor(textSecondary)
@@ -56,23 +84,24 @@ public struct StatsChartView: View {
 
             // Interactive Chart
             Chart {
-                ForEach(history) { point in
+                ForEach(points) { point in
                     LineMark(
                         x: .value("Time", point.timestamp),
                         y: .value("Tokens", point.tokens)
                     )
-                    .interpolationMethod(.monotone)
-                    .lineStyle(StrokeStyle(lineWidth: 1.4, lineCap: .round, lineJoin: .round))
+                    .interpolationMethod(.linear)
+                    .lineStyle(StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
                     .foregroundStyle(appleBlue)
 
                     AreaMark(
                         x: .value("Time", point.timestamp),
-                        y: .value("Tokens", point.tokens)
+                        yStart: .value("Baseline", 0),
+                        yEnd: .value("Tokens", point.tokens)
                     )
-                    .interpolationMethod(.monotone)
+                    .interpolationMethod(.linear)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [appleBlue.opacity(0.12), appleBlue.opacity(0.005)],
+                            colors: [appleBlue.opacity(0.18), appleBlue.opacity(0.01)],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -93,8 +122,8 @@ public struct StatsChartView: View {
                     )
                     .symbolSize(42)
                     .foregroundStyle(appleBlue)
-                } else if let latest = history.last {
-                    // Pulsing endpoint dot for live feel
+                } else if let latest = points.last {
+                    // Endpoint dot for live feel
                     PointMark(
                         x: .value("Latest Time", latest.timestamp),
                         y: .value("Latest Tokens", latest.tokens)
@@ -103,6 +132,7 @@ public struct StatsChartView: View {
                     .foregroundStyle(aggregator.isGenerating ? Color(red: 0.20, green: 0.78, blue: 0.35) : appleBlue)
                 }
             }
+            .chartYScale(domain: 0 ... Int(Double(maxTokenValue) * 1.15))
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
                     AxisValueLabel(format: .dateTime.hour().minute())
@@ -129,8 +159,8 @@ public struct StatsChartView: View {
                             switch phase {
                             case .active(let location):
                                 if let date: Date = proxy.value(atX: location.x) {
-                                    // Find closest point in history
-                                    let closest = history.min(by: {
+                                    // Find closest point in display points
+                                    let closest = points.min(by: {
                                         abs($0.timestamp.timeIntervalSince(date)) < abs($1.timestamp.timeIntervalSince(date))
                                     })
                                     withAnimation(.easeOut(duration: 0.1)) {

@@ -11,11 +11,12 @@ public final class TokenAggregator: ObservableObject {
     @Published public var historyPoints: [TokenDataPoint] = []
     @Published public var hoveredPoint: TokenDataPoint? = nil
     @Published public var activeIDE: String = "Antigravity IDE"
-    @Published public var conversationTopic: String = "Macos AI Token Monitor"
+    @Published public var conversationTopic: String = "Use Token Bar"
     @Published public var detectedActiveModel: String = "Gemini 3.8 Flash"
     @Published public var dailyRecords: [DailyUsageRecord] = []
 
     private var timer: Timer?
+    private var trackingDay: Date = Calendar.current.startOfDay(for: Date())
 
     public init() {
         seedInitialHistory()
@@ -24,22 +25,37 @@ public final class TokenAggregator: ObservableObject {
     }
 
     private func seedInitialHistory() {
-        self.historyPoints = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: 282_200)
-        self.dailyRecords = AntigravityWatcher.shared.fetchFirst30DailyUsageRecords(
-            costPerMillion: UserPreferences.shared.costPerMillionTokens,
-            model: UserPreferences.shared.selectedModel
-        )
+        let (didRollover, store) = HistoryStorageService.shared.checkAndPerformDayRollover()
+        if didRollover {
+            self.stats = TokenStats()
+            self.historyPoints = []
+            self.dailyRecords = []
+        } else {
+            let todayPoints = store.timelinePoints.filter { Calendar.current.isDateInToday($0.timestamp) }
+            self.historyPoints = todayPoints.isEmpty ? AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: store.todayTotalTokens) : todayPoints
+            self.dailyRecords = store.dailyRecords
+        }
     }
 
     public func startPeriodicSync() {
         timer?.invalidate()
-        let interval = 2.0 // Refresh every 2 seconds for dynamic feel
+        let interval = 2.0 // Refresh every 2 seconds
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshMetrics()
         }
     }
 
     public func refreshMetrics() {
+        let todayStart = Calendar.current.startOfDay(for: Date())
+        if !Calendar.current.isDate(trackingDay, inSameDayAs: todayStart) {
+            // Automatic reset for a new day
+            trackingDay = todayStart
+            _ = HistoryStorageService.shared.checkAndPerformDayRollover()
+            self.stats = TokenStats()
+            self.historyPoints = []
+            self.dailyRecords = []
+        }
+
         let (antigravityAgents, antigravityTokens) = AntigravityWatcher.shared.fetchLatestSessionInfo()
         let (vsCodeAgents, vsCodeTokens) = VSCodeWatcher.shared.fetchLatestVSCodeMetrics()
         let runningApps = ProcessMonitor.shared.detectRunningAIApplications()
@@ -71,15 +87,21 @@ public final class TokenAggregator: ObservableObject {
             }
         }
 
-        // Determine active IDE (prioritizing multi-project Antigravity, then active generating agent)
-        if antigravityAgents.count > 1 {
-            self.activeIDE = "Antigravity (\(antigravityAgents.count) Projects)"
-        } else if mergedAgents.contains(where: { $0.provider == .antigravity }) || runningApps.contains(.antigravity) {
-            self.activeIDE = AIAppProvider.antigravity.rawValue
-        } else if let generating = mergedAgents.first(where: { $0.state == .generating || $0.state == .executingTool }) {
+        // Determine active IDE with intelligent priority:
+        // 1. Any agent actively generating / executing tool
+        // 2. Currently focused / frontmost application in macOS
+        // 3. Multi-project Antigravity if multiple projects active
+        // 4. Any detected running AI app
+        if let generating = mergedAgents.first(where: { $0.state == .generating || $0.state == .executingTool }) {
             self.activeIDE = generating.provider.rawValue
-        } else if let activeWithTokens = mergedAgents.first(where: { $0.tokensSession > 0 }) {
-            self.activeIDE = activeWithTokens.provider.rawValue
+        } else if let frontmost = ProcessMonitor.shared.frontmostAIApp() {
+            self.activeIDE = frontmost.rawValue
+        } else if antigravityAgents.count > 1 {
+            self.activeIDE = "Antigravity (\(antigravityAgents.count) Projects)"
+        } else if ProcessMonitor.shared.isAntigravityRunning() || mergedAgents.contains(where: { $0.provider == .antigravity }) {
+            self.activeIDE = AIAppProvider.antigravity.rawValue
+        } else if ProcessMonitor.shared.isVSCodeRunning() || mergedAgents.contains(where: { $0.provider == .vsCode }) {
+            self.activeIDE = AIAppProvider.vsCode.rawValue
         } else if let running = runningApps.first {
             self.activeIDE = running.rawValue
         } else {
@@ -91,7 +113,7 @@ public final class TokenAggregator: ObservableObject {
         self.detectedActiveModel = liveModel
         UserPreferences.shared.selectedModel = liveModel
 
-        // Multi-Project Topic: display combined or active project topic
+        // Project Topic
         if antigravityAgents.count > 1 {
             if let generating = antigravityAgents.first(where: { $0.state == .generating }) {
                 let name = generating.name.replacingOccurrences(of: "Antigravity (", with: "").replacingOccurrences(of: ")", with: "")
@@ -100,19 +122,24 @@ public final class TokenAggregator: ObservableObject {
                 let names = antigravityAgents.map { $0.name.replacingOccurrences(of: "Antigravity (", with: "").replacingOccurrences(of: ")", with: "") }
                 self.conversationTopic = names.joined(separator: " • ")
             }
+        } else if let singleAntigravity = antigravityAgents.first {
+            let name = singleAntigravity.name.replacingOccurrences(of: "Antigravity (", with: "").replacingOccurrences(of: ")", with: "")
+            self.conversationTopic = name == "Antigravity Agent" ? AntigravityWatcher.shared.fetchCurrentConversationTopic() : name
         } else {
             self.conversationTopic = AntigravityWatcher.shared.fetchCurrentConversationTopic()
         }
-        if self.dailyRecords.isEmpty {
-            self.dailyRecords = AntigravityWatcher.shared.fetchFirst30DailyUsageRecords(
-                costPerMillion: UserPreferences.shared.costPerMillionTokens,
-                model: liveModel
-            )
-        }
+
+        // Real Daily Usage Records (from files + persistent store)
+        let freshRecords = AntigravityWatcher.shared.fetchFirst30DailyUsageRecords(
+            costPerMillion: UserPreferences.shared.costPerMillionTokens,
+            model: liveModel
+        )
+        self.dailyRecords = freshRecords
+
         self.activeAgents = mergedAgents
         self.isGenerating = mergedAgents.contains { $0.state == .generating || $0.state == .executingTool }
 
-        // Live Real Cumulative Tokens (monotonically persistent across session, no artificial floors)
+        // Live Real Cumulative Tokens strictly for today
         let actualTotalTokens = antigravityTokens + vsCodeTokens
         let persistentTotal = max(self.stats.totalTokens, actualTotalTokens)
         let totalIn = Int(Double(persistentTotal) * 0.7)
@@ -127,7 +154,7 @@ public final class TokenAggregator: ObservableObject {
             estimatedCostUSD: estimatedCost,
             tokensPerSecond: self.isGenerating ? 54.0 : 0.0,
             providerBreakdown: [
-                AIAppProvider.antigravity.rawValue: persistentTotal,
+                AIAppProvider.antigravity.rawValue: antigravityTokens,
                 AIAppProvider.vsCode.rawValue: vsCodeTokens
             ]
         )
@@ -141,25 +168,47 @@ public final class TokenAggregator: ObservableObject {
             )
         }
 
-        // Live Dynamic Chart Feed spanning entire day from start of usage
+        // Live Dynamic Chart Feed spanning strictly today
         let now = Date()
         let currentTotal = self.stats.totalTokens
+
+        // Clean any stale non-today points
+        historyPoints = historyPoints.filter { Calendar.current.isDateInToday($0.timestamp) }
 
         if historyPoints.isEmpty {
             self.historyPoints = AntigravityWatcher.shared.fetchDailyHistoryPoints(totalTokens: currentTotal)
         } else if let last = historyPoints.last {
+            let newTotal = max(last.tokens, currentTotal)
+            let newPoint = TokenDataPoint(timestamp: now, tokens: newTotal, provider: .antigravity)
+
             if now.timeIntervalSince(last.timestamp) >= 15 {
-                historyPoints.append(TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity))
+                historyPoints.append(newPoint)
+                HistoryStorageService.shared.recordTimelinePoint(newPoint)
             } else if let lastIndex = historyPoints.indices.last {
-                historyPoints[lastIndex] = TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity)
+                historyPoints[lastIndex] = newPoint
+                HistoryStorageService.shared.recordTimelinePoint(newPoint)
             }
         } else {
-            historyPoints.append(TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity))
+            let point = TokenDataPoint(timestamp: now, tokens: currentTotal, provider: .antigravity)
+            historyPoints.append(point)
+            HistoryStorageService.shared.recordTimelinePoint(point)
+        }
+
+        // Persist real event in daily records if active generating
+        if self.isGenerating && currentTotal > 0 {
+            HistoryStorageService.shared.recordDailyUsage(
+                ide: self.activeIDE,
+                agentName: self.activeAgents.first(where: { $0.state == .generating })?.name ?? "Antigravity Agent",
+                modelName: liveModel,
+                tokens: currentTotal,
+                costUSD: estimatedCost,
+                timestamp: now
+            )
         }
     }
 
     public func detectCurrentLiveModel() -> String {
-        if self.activeIDE == AIAppProvider.antigravity.rawValue {
+        if self.activeIDE.contains("Antigravity") {
             return AntigravityWatcher.shared.detectActiveModel()
         } else if self.activeIDE == AIAppProvider.cursor.rawValue {
             return "Claude 3.5 Sonnet"
@@ -182,7 +231,7 @@ public final class TokenAggregator: ObservableObject {
     public func resetSession() {
         self.stats = TokenStats()
         self.historyPoints = []
+        _ = HistoryStorageService.shared.checkAndPerformDayRollover()
         self.refreshMetrics()
     }
-
 }

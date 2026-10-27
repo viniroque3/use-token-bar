@@ -43,6 +43,38 @@ public final class ProcessMonitor {
         return Array(detected)
     }
 
+    public func isAntigravityRunning() -> Bool {
+        return NSWorkspace.shared.runningApplications.contains { app in
+            guard let bid = app.bundleIdentifier?.lowercased() else { return false }
+            return !bid.hasPrefix("com.apple.") && (bid.contains("antigravity") || (app.localizedName ?? "").lowercased().contains("antigravity"))
+        }
+    }
+
+    public func isVSCodeRunning() -> Bool {
+        return NSWorkspace.shared.runningApplications.contains { app in
+            guard let bid = app.bundleIdentifier?.lowercased() else { return false }
+            return !bid.hasPrefix("com.apple.") && (bid.contains("com.microsoft.vscode") || (app.localizedName ?? "").lowercased() == "code")
+        }
+    }
+
+    public func frontmostAIApp() -> AIAppProvider? {
+        guard let front = NSWorkspace.shared.frontmostApplication,
+              let bid = front.bundleIdentifier?.lowercased() else {
+            return nil
+        }
+        if bid.hasPrefix("com.apple.") { return nil }
+        let name = (front.localizedName ?? "").lowercased()
+
+        if bid.contains("antigravity") || name.contains("antigravity") {
+            return .antigravity
+        } else if bid.contains("todesktop.230313mzl4w4u92") || bid == "com.cursor.ide" || name == "cursor" {
+            return .cursor
+        } else if bid.contains("com.microsoft.vscode") || name == "code" {
+            return .vsCode
+        }
+        return nil
+    }
+
     private func listRunningProcessNames() -> [String] {
         let task = Process()
         task.launchPath = "/bin/ps"

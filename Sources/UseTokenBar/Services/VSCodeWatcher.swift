@@ -15,7 +15,7 @@ public final class VSCodeWatcher {
         var agents: [AgentModel] = []
         var totalTokens = 0
 
-        guard fileManager.fileExists(atPath: appSupportDir.path) else {
+        guard ProcessMonitor.shared.isVSCodeRunning(), fileManager.fileExists(atPath: appSupportDir.path) else {
             return (agents, totalTokens)
         }
 
@@ -32,15 +32,16 @@ public final class VSCodeWatcher {
                     }
 
                     if let latest = sorted.first {
-                        let modDate = (try? latest.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
-                        let isActive = Date().timeIntervalSince(modDate) < 600
+                        let modDate = (try? latest.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date.distantPast
+                        guard Calendar.current.isDateInToday(modDate) else { continue }
+                        let isActive = Date().timeIntervalSince(modDate) < 180
                         let providerName: AIAppProvider = ext.contains("roo") ? .cline : .vsCode
 
                         agents.append(AgentModel(
                             name: ext.contains("roo") ? "Roo-Cline Autonomous Agent" : "Claude Dev Agent",
                             provider: providerName,
                             state: isActive ? .executingTool : .idle,
-                            currentAction: isActive ? "Executing workspace edits" : "Completed",
+                            currentAction: isActive ? "Executing workspace edits" : "Awaiting prompt",
                             tokensSession: 14250,
                             startedAt: modDate.addingTimeInterval(-1200),
                             lastActivityAt: modDate

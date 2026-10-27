@@ -46,9 +46,9 @@ Security section and click "Open Anyway".
 TXT
 
 echo "=== 3. Packaging DMG ==="
-DMG_PATH="dist/UseTokenBar-v0.1.dmg"
+DMG_PATH="dist/UseTokenBar-v0.2.dmg"
 rm -f "$DMG_PATH"
-hdiutil create -volname "Use Token Bar v0.1" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG_PATH"
+hdiutil create -volname "Use Token Bar v0.2" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG_PATH"
 
 rm -rf "$DMG_STAGING"
 echo "✅ DMG successfully packaged at: $DMG_PATH"
